@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Mail, User, Wallet } from "lucide-react"
+import { CloudCog, Mail, User, Wallet } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
@@ -57,11 +57,9 @@ export function LoginPage() {
           dashboardRoute = '/admin'; // O la ruta específica para instituciones
         }
         
-        console.log(`🎯 [LoginPage] Rol del usuario: ${primaryRole}, redirigiendo a: ${dashboardRoute}`);
-        console.log('🚨 [LoginPage] REDIRECCIÓN DE LOGIN A:', dashboardRoute);
-        
-        // Redirección usando window.location para forzar la navegación
-        console.log('🔄 [LoginPage] Usando window.location.href para redirección forzada');
+     
+         console.log( "primaryRole",primaryRole)
+        // Redirección usando window.location para forzar la navegación  console.log('🔄 [LoginPage] Usando window.location.href para redirección forzada');
         window.location.href = dashboardRoute;
       } else {
         // Fallback: redirigir a dashboard de estudiante por defecto
@@ -176,12 +174,12 @@ export function RegisterPage() {
 
   const loadRoles = async () => {
     try {
-      console.log('🔍 [RegisterPage] Cargando roles...')
+
       const response = await apiService.getRoles()
-      console.log('🔍 [RegisterPage] Respuesta de roles:', response)
+
       
       if (response.success && response.data) {
-        console.log('🔍 [RegisterPage] Roles cargados:', response.data)
+
         setRoles(response.data)
       } else {
         console.error('🔍 [RegisterPage] Error en respuesta de roles:', response.error)
@@ -213,8 +211,7 @@ export function RegisterPage() {
 
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('🔍 [RegisterPage] Formulario enviado, iniciando registro...');
-    console.log('🔍 [RegisterPage] Datos del formulario:', { ...formData, password: '***' });
+
     setError("")
 
     if (!formData.name || !formData.email || !formData.password) {
@@ -222,12 +219,10 @@ export function RegisterPage() {
       return
     }
 
-    // Encontrar el rol seleccionado en los roles cargados dinámicamente
-    console.log('🔍 [RegisterPage] Roles disponibles:', roles);
-    console.log('🔍 [RegisterPage] Buscando rol:', formData.role);
+
     
     const selectedRole = roles.find(r => r.name === formData.role);
-    console.log('🔍 [RegisterPage] Rol encontrado:', selectedRole);
+ 
     
     if (!selectedRole) {
       setError("Por favor selecciona un rol válido")
@@ -244,14 +239,10 @@ export function RegisterPage() {
       ...formData,
       role: selectedRole.id  // Usar el ID del rol encontrado
     })
-    console.log('🔍 [RegisterPage] Resultado del registro:', result);
     
     if (result.success && result.loginResponse && result.loginResponse.user) {
-      console.log('✅ [RegisterPage] Registro exitoso, obteniendo roles del usuario...');
-      
       // Obtener los roles del usuario desde la respuesta del login
       const userRoles = result.loginResponse.user.roles;
-      console.log('🔍 [RegisterPage] Roles del usuario desde login:', userRoles);
       
       if (userRoles && userRoles.length > 0) {
         // Determinar el rol principal (tomar el primero si hay múltiples)
@@ -269,11 +260,6 @@ export function RegisterPage() {
           dashboardRoute = '/admin'; // O la ruta específica para instituciones
         }
         
-        console.log(`🎯 [RegisterPage] Rol del usuario: ${primaryRole}, redirigiendo a: ${dashboardRoute}`);
-        console.log('🚨 [RegisterPage] REDIRECCIÓN FORZADA A:', dashboardRoute);
-        
-        // Redirección usando window.location para forzar la navegación
-        console.log('🔄 [RegisterPage] Usando window.location.href para redirección forzada');
         window.location.href = dashboardRoute;
       } else {
         // Fallback: redirigir a dashboard de estudiante por defecto
