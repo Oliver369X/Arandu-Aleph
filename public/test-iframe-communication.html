@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Comunicación Iframe-Parent</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        
+        .test-section h3 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        
+        .game-selector {
+            margin: 20px 0;
+        }
+        
+        select, button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border: 3px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f0f0f0;
+            margin: 20px 0;
+        }
+        
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .message.incoming {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+        }
+        
+        .message.outgoing {
+            background: rgba(46, 204, 113, 0.2);
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .message.error {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .message .timestamp {
+            color: #95a5a6;
+            font-size: 12px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Test de Comunicación Iframe-Parent</h1>
+        
+        <div class="test-section">
+            <h3>📄 Selector de Juego</h3>
+            <div class="game-selector">
+                <select id="gameSelect">
+                    <option value="">Selecciona un juego...</option>
+                    <option value="games/fotosintesis.html">🌱 Laboratorio de Fotosíntesis</option>
+                    <option value="games/Ethereum Learning.html">🪙 Aventura Ethereum</option>
+                    <option value="games/gameAI.html">🤖 Aventura de IA</option>
+                    <option value="games/gameBlokchin.html">⛓️ Explorador Blockchain</option>
+                </select>
+                <button onclick="loadGame()">Cargar Juego</button>
+                <button onclick="clearIframe()">Limpiar</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Estadísticas de Comunicación</h3>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="messagesReceived">0</div>
+                    <div class="stat-label">Mensajes Recibidos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="messagesSent">0</div>
+                    <div class="stat-label">Mensajes Enviados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="gameStatus">Sin Juego</div>
+                    <div class="stat-label">Estado del Juego</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="lastMessageTime">Nunca</div>
+                    <div class="stat-label">Último Mensaje</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🕹️ Juego Cargado</h3>
+            <div class="iframe-container">
+                <div class="loading" id="loadingIndicator">No hay juego cargado</div>
+                <iframe id="gameIframe" style="display: none;" sandbox="allow-scripts allow-same-origin allow-forms allow-modals"></iframe>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button onclick="sendTestMessage('PARENT_READY')">📤 Enviar PARENT_READY</button>
+                <button onclick="sendTestMessage('TEST_PING')">🏓 Enviar PING</button>
+                <button onclick="toggleIframeDisplay()">👁️ Toggle Iframe</button>
+                <button onclick="clearMessages()">🧹 Limpiar Log</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📋 Log de Comunicación</h3>
+            <div class="messages" id="messageLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let messageCount = { received: 0, sent: 0 };
+        let gameIframe = null;
+        let currentGame = null;
+        
+        // Referencias a elementos DOM
+        const gameSelect = document.getElementById('gameSelect');
+        const iframe = document.getElementById('gameIframe');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const messageLog = document.getElementById('messageLog');
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            document.getElementById('messagesReceived').textContent = messageCount.received;
+            document.getElementById('messagesSent').textContent = messageCount.sent;
+            document.getElementById('gameStatus').textContent = currentGame ? 'Cargado' : 'Sin Juego';
+            document.getElementById('lastMessageTime').textContent = new Date().toLocaleTimeString();
+        }
+        
+        // Agregar mensaje al log
+        function addMessage(type, content, data = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const dataStr = data ? JSON.stringify(data, null, 2) : '';
+            
+            messageDiv.innerHTML = `
+                <div><strong>[${type.toUpperCase()}]</strong> ${content}</div>
+                <div class="timestamp">${timestamp}</div>
+                ${dataStr ? `<div style="margin-top: 5px; color: #bdc3c7;"><pre>${dataStr}</pre></div>` : ''}
+            `;
+            
+            messageLog.appendChild(messageDiv);
+            messageLog.scrollTop = messageLog.scrollHeight;
+        }
+        
+        // Listener para mensajes del iframe
+        window.addEventListener('message', function(event) {
+            messageCount.received++;
+            updateStats();
+            
+            console.log('📨 [Parent] Mensaje recibido del iframe:', event);
+            
+            try {
+                const message = event.data;
+                addMessage('incoming', `Tipo: ${message.type}`, message);
+                
+                // Responder a ciertos tipos de mensaje
+                if (message.type === 'GAME_READY') {
+                    addMessage('outgoing', 'Respondiendo con PARENT_READY');
+                    sendMessageToIframe('PARENT_READY', { timestamp: Date.now() });
+                }
+                
+            } catch (error) {
+                addMessage('error', 'Error procesando mensaje: ' + error.message);
+            }
+        });
+        
+        // Enviar mensaje al iframe
+        function sendMessageToIframe(type, payload = {}) {
+            if (!iframe || !iframe.contentWindow) {
+                addMessage('error', 'No hay iframe disponible para enviar mensaje');
+                return;
+            }
+            
+            try {
+                const message = { type, payload };
+                iframe.contentWindow.postMessage(message, '*');
+                
+                messageCount.sent++;
+                updateStats();
+                addMessage('outgoing', `Enviado: ${type}`, message);
+                
+            } catch (error) {
+                addMessage('error', 'Error enviando mensaje: ' + error.message);
+            }
+        }
+        
+        // Cargar juego seleccionado
+        function loadGame() {
+            const selectedGame = gameSelect.value;
+            if (!selectedGame) {
+                alert('Por favor selecciona un juego');
+                return;
+            }
+            
+            currentGame = selectedGame;
+            loadingIndicator.textContent = 'Cargando juego...';
+            loadingIndicator.style.display = 'block';
+            iframe.style.display = 'none';
+            
+            // Limpiar mensajes anteriores
+            messageCount = { received: 0, sent: 0 };
+            updateStats();
+            addMessage('outgoing', `Cargando juego: ${selectedGame}`);
+            
+            // Cargar el juego en el iframe
+            iframe.onload = function() {
+                loadingIndicator.style.display = 'none';
+                iframe.style.display = 'block';
+                addMessage('incoming', 'Iframe cargado completamente');
+                
+                // Enviar mensaje de inicialización después de un delay
+                setTimeout(() => {
+                    sendMessageToIframe('PARENT_READY', { timestamp: Date.now() });
+                }, 1000);
+            };
+            
+            iframe.onerror = function(error) {
+                addMessage('error', 'Error cargando iframe: ' + error.message);
+                loadingIndicator.textContent = 'Error cargando juego';
+            };
+            
+            iframe.src = selectedGame;
+        }
+        
+        // Limpiar iframe
+        function clearIframe() {
+            iframe.src = '';
+            iframe.style.display = 'none';
+            loadingIndicator.style.display = 'block';
+            loadingIndicator.textContent = 'No hay juego cargado';
+            currentGame = null;
+            messageCount = { received: 0, sent: 0 };
+            updateStats();
+            addMessage('outgoing', 'Iframe limpiado');
+        }
+        
+        // Enviar mensaje de test
+        function sendTestMessage(type) {
+            const payloads = {
+                'PARENT_READY': { timestamp: Date.now() },
+                'TEST_PING': { message: 'Ping desde parent', timestamp: Date.now() }
+            };
+            
+            sendMessageToIframe(type, payloads[type] || {});
+        }
+        
+        // Toggle display del iframe
+        function toggleIframeDisplay() {
+            if (iframe.style.display === 'none') {
+                iframe.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+            } else {
+                iframe.style.display = 'none';
+                loadingIndicator.style.display = 'block';
+            }
+            addMessage('outgoing', 'Toggle iframe display');
+        }
+        
+        // Limpiar log de mensajes
+        function clearMessages() {
+            messageLog.innerHTML = '';
+            addMessage('outgoing', 'Log de mensajes limpiado');
+        }
+        
+        // Inicialización
+        updateStats();
+        addMessage('outgoing', 'Test de comunicación inicializado');
+        
+        // Log adicional
+        console.log('🧪 [Test] Página de test de comunicación iframe-parent cargada');
+        console.log('🧪 [Test] Juegos disponibles:', Array.from(gameSelect.options).map(o => o.value).filter(Boolean));
+    </script>
+</body>
+</html>

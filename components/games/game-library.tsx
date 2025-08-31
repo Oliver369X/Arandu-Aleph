@@ -12,6 +12,7 @@ import { GamePlayer } from './game-player'
 import { GameGenerator } from './game-generator'
 import { AIGame, apiService } from '@/lib/api'
 import { useAuth } from '@/hooks/use-auth'
+import { useHTMLGames } from '@/hooks/use-html-games'
 import { toast } from '@/hooks/use-toast'
 import { 
   Search, 
@@ -53,6 +54,14 @@ export function GameLibrary({
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   
+  // Hook para juegos HTML pre-existentes
+  const { 
+    games: htmlGames, 
+    isLoading: isLoadingHTMLGames, 
+    loadGame: loadHTMLGame,
+    error: htmlGamesError 
+  } = useHTMLGames();
+  
   const [filters, setFilters] = useState<GameFilters>({
     search: '',
     gameType: 'all',
@@ -63,22 +72,45 @@ export function GameLibrary({
   useEffect(() => {
     loadGames();
     loadPopularGames();
-  }, [subtopicId]);
+  }, [subtopicId, htmlGames]); // Recargar cuando cambien los juegos HTML
+
+  // Debugging: Log del estado actual
+  useEffect(() => {
+    console.log('🎮 [GameLibrary] Estado actual:', {
+      gamesCount: games.length,
+      popularGamesCount: popularGames.length,
+      popularGamesType: typeof popularGames,
+      popularGamesIsArray: Array.isArray(popularGames)
+    });
+  }, [games, popularGames]);
 
   const loadGames = async () => {
     setIsLoading(true);
     try {
-      let response;
+      let apiGames: AIGame[] = [];
       
+      // Cargar juegos de la API si hay subtopicId
       if (subtopicId) {
-        response = await apiService.getAIGamesBySubtopic(subtopicId);
+        const response = await apiService.getAIGamesBySubtopic(subtopicId);
+        if (response.success && response.data) {
+          apiGames = response.data;
+        }
       } else {
-        response = await apiService.getAIGames();
+        const response = await apiService.getAIGames();
+        if (response.success && response.data) {
+          apiGames = response.data;
+        }
       }
       
-      if (response.success && response.data) {
-        setGames(response.data);
+      // Combinar juegos de API con juegos HTML (solo si no hay subtopicId específico)
+      let combinedGames = apiGames;
+      if (!subtopicId) {
+        combinedGames = [...apiGames, ...htmlGames];
+        console.log(`🎮 [GameLibrary] Combinando ${apiGames.length} juegos de API con ${htmlGames.length} juegos HTML`);
       }
+      
+      setGames(combinedGames);
+      
     } catch (error) {
       console.error('Error cargando juegos:', error);
       toast({
@@ -94,18 +126,50 @@ export function GameLibrary({
   const loadPopularGames = async () => {
     try {
       const response = await apiService.getPopularGames(6);
-      if (response.success && response.data) {
+      if (response.success && response.data && Array.isArray(response.data)) {
         setPopularGames(response.data);
+      } else {
+        console.log('⚠️ getPopularGames no devolvió un array válido, usando array vacío');
+        setPopularGames([]);
       }
     } catch (error) {
       console.error('Error cargando juegos populares:', error);
+      // Asegurar que siempre sea un array
+      setPopularGames([]);
     }
   };
 
-  const handleGamePlay = (game: AIGame) => {
-    setSelectedGame(game);
+  const handleGamePlay = async (game: AIGame) => {
+    console.log('🎮 [GameLibrary] Iniciando juego:', game.title);
+    
+    let gameToPlay = game;
+    
+    // Si es un juego HTML sin contenido, cargarlo
+    if (game.id.startsWith('html-') || (!game.htmlContent && htmlGames.find(hg => hg.id === game.id))) {
+      console.log('🔄 [GameLibrary] Cargando contenido HTML para:', game.id);
+      
+      toast({
+        title: "🎮 Preparando juego",
+        description: "Cargando contenido del juego...",
+      });
+      
+      const gameWithContent = await loadHTMLGame(game.id);
+      if (gameWithContent) {
+        gameToPlay = gameWithContent;
+        console.log('✅ [GameLibrary] Contenido HTML cargado exitosamente');
+      } else {
+        toast({
+          title: "❌ Error",
+          description: "No se pudo cargar el contenido del juego",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    setSelectedGame(gameToPlay);
     setIsPlayerOpen(true);
-    onGameSelect?.(game);
+    onGameSelect?.(gameToPlay);
   };
 
   const handleGameComplete = (results: any) => {
@@ -207,7 +271,7 @@ export function GameLibrary({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${showGenerator && subtopicId ? 'grid-cols-4' : !subtopicId ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Gamepad2 className="w-4 h-4" />
             Todos ({games.length})
@@ -216,6 +280,12 @@ export function GameLibrary({
             <TrendingUp className="w-4 h-4" />
             Populares ({popularGames.length})
           </TabsTrigger>
+          {!subtopicId && (
+            <TabsTrigger value="html" className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Pre-hechos ({htmlGames.length})
+            </TabsTrigger>
+          )}
           {showGenerator && subtopicId && (
             <TabsTrigger value="generate" className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
@@ -355,6 +425,72 @@ export function GameLibrary({
           )}
         </TabsContent>
 
+        {/* Tab: Juegos HTML pre-existentes */}
+        {!subtopicId && (
+          <TabsContent value="html" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Juegos Pre-hechos de Alta Calidad
+                </CardTitle>
+                <CardDescription>
+                  Juegos educativos profesionales listos para usar
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingHTMLGames ? (
+                  <div className="text-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Cargando juegos HTML...</p>
+                  </div>
+                ) : htmlGamesError ? (
+                  <div className="text-center py-8">
+                    <p className="text-destructive font-medium">⚠️ {htmlGamesError}</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      No se pudieron cargar los juegos HTML pre-existentes
+                    </p>
+                  </div>
+                ) : htmlGames.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Gamepad2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      No hay juegos HTML disponibles
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {htmlGames.map(game => (
+                      <GameCard
+                        key={game.id}
+                        game={game}
+                        onPlay={handleGamePlay}
+                      />
+                    ))}
+                  </div>
+                )}
+                
+                {htmlGames.length > 0 && (
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start gap-3">
+                      <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-blue-800 mb-1">✨ Juegos de Alta Calidad</p>
+                        <ul className="text-blue-700 space-y-1 text-xs">
+                          <li>• Desarrollados por expertos en educación y tecnología</li>
+                          <li>• Incluyen gráficos 3D, animaciones y sonidos profesionales</li>
+                          <li>• Optimizados para máximo engagement y aprendizaje</li>
+                          <li>• Compatibles con todos los dispositivos modernos</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
         {/* Tab: Juegos populares */}
         <TabsContent value="popular" className="space-y-4">
           <Card>
@@ -377,13 +513,19 @@ export function GameLibrary({
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {popularGames.map(game => (
+                  {Array.isArray(popularGames) ? popularGames.map(game => (
                     <GameCard
                       key={game.id}
                       game={game}
                       onPlay={handleGamePlay}
                     />
-                  ))}
+                  )) : (
+                    <div className="col-span-full text-center py-8">
+                      <p className="text-muted-foreground">
+                        Error cargando juegos populares
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -403,7 +545,7 @@ export function GameLibrary({
 
       {/* Game Player Modal */}
       <GamePlayer
-        game={selectedGame}
+        game={selectedGame || undefined}
         isOpen={isPlayerOpen}
         onClose={() => {
           setIsPlayerOpen(false);

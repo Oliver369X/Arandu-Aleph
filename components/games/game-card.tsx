@@ -15,10 +15,14 @@ import {
   Target,
   Puzzle,
   BookOpen,
-  MoreVertical
+  MoreVertical,
+  ChevronDown,
+  Maximize,
+  ExternalLink
 } from 'lucide-react'
-import { AIGame } from '@/lib/api'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useRouter } from 'next/navigation'
+import { AIGame } from '@/lib/api'
 
 interface GameCardProps {
   game: AIGame;
@@ -74,6 +78,7 @@ export function GameCard({
   className = ""
 }: GameCardProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   
   const GameIcon = gameTypeIcons[game.gameType] || Gamepad2;
   
@@ -176,21 +181,35 @@ export function GameCard({
                 {difficultyLabels[game.difficulty]}
               </Badge>
               
-              <Button 
-                size="sm" 
-                onClick={handlePlay}
-                disabled={isLoading}
-                className="h-8 px-3"
-              >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Play className="w-3 h-3 mr-1" />
-                    Jugar
-                  </>
-                )}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    size="sm" 
+                    disabled={isLoading}
+                    className="h-8 px-3"
+                  >
+                    {isLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Play className="w-3 h-3 mr-1" />
+                        Jugar
+                        <ChevronDown className="w-3 h-3 ml-1" />
+                      </>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handlePlay}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Jugar en Modal
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push(`/game/${game.id}`)}>
+                    <Maximize className="w-4 h-4 mr-2" />
+                    Jugar Pantalla Completa
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           

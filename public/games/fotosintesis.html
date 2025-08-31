@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laboratorio de Fotosíntesis</title>
+  <style>
+    html, body { height: 100%; margin: 0; font-family: "Nunito", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #bfeaff; }
+    #app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    canvas { display: block; }
+
+    /* UI */
+    .hud { position: absolute; inset: 0; pointer-events: none; }
+    .controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; pointer-events: auto; }
+    .btn { background: white; border: 0; padding: 12px 16px; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.15); font-weight: 800; cursor: pointer; transition: transform .06s ease; }
+    .btn:active { transform: translateY(2px) scale(0.98); }
+    .btn small { display: block; font-weight: 600; opacity: .6; }
+    .meters { position: absolute; top: 16px; left: 16px; display: grid; gap: 8px; pointer-events: auto; }
+    .meter { background: rgba(255,255,255,0.85); padding: 8px 10px; border-radius: 12px; width: 220px; box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+    .meter-label { font-size: 12px; font-weight: 800; opacity: .75; display: flex; justify-content: space-between; }
+    .bar { height: 8px; border-radius: 6px; background: #e8eef8; overflow: hidden; margin-top: 6px; }
+    .bar > span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg,#86efac,#22c55e); transition: width .3s ease; }
+
+    .bubble { position: absolute; left: 50%; transform: translateX(-50%); top: 80px; background: rgba(255,255,255,0.95); border-radius: 16px; padding: 10px 14px; font-weight: 900; box-shadow: 0 6px 20px rgba(0,0,0,0.15); pointer-events: none; min-width: 260px; text-align: center; }
+    .bubble:after { content: ""; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid rgba(255,255,255,0.95); }
+
+    .hint { position: absolute; right: 16px; top: 16px; background: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; box-shadow: 0 6px 16px rgba(0,0,0,.1); }
+
+    .brand { position: absolute; bottom: 20px; right: 20px; background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 12px; font-size: 12px; font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,.1); }
+    
+    .equation { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.9); padding: 12px 16px; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.15); font-size: 14px; font-weight: 700; max-width: 300px; }
+    .equation h4 { margin: 0 0 8px 0; color: #0f172a; font-size: 13px; }
+    .equation-formula { font-family: 'Courier New', monospace; background: #f1f5f9; padding: 8px; border-radius: 8px; margin: 6px 0; color: #0f172a; }
+    .products { display: flex; gap: 12px; margin-top: 8px; font-size: 12px; }
+    .product { background: #ecfccb; padding: 4px 8px; border-radius: 8px; border: 1px solid #a3e635; }
+    
+    .score-display { position: absolute; top: 120px; left: 16px; background: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 12px; font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+    .level-display { position: absolute; top: 160px; left: 16px; background: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 12px; font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+    
+    .achievements { position: absolute; top: 200px; left: 16px; background: rgba(255,255,255,0.85); padding: 8px 12px; border-radius: 12px; font-weight: 700; box-shadow: 0 6px 16px rgba(0,0,0,0.1); max-width: 200px; }
+    .achievement { font-size: 11px; margin: 2px 0; opacity: 0.6; }
+    .achievement.unlocked { opacity: 1; color: #059669; }
+    
+    .camera-controls { position: absolute; bottom: 20px; left: 20px; display: flex; gap: 8px; }
+    .cam-btn { background: rgba(255,255,255,0.85); border: 0; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  </style>
+</head>
+<body style="margin:0;padding:0;overflow:hidden;">
+  <div id="app">
+    <div class="hud">
+      <div id="bubble" class="bubble">¡Bienvenido! Ayuda a la planta a crecer 🌱</div>
+      <div class="meters">
+        <div class="meter">
+          <div class="meter-label"><span>Luz Solar</span><span id="sunPct">0%</span></div>
+          <div class="bar"><span id="sunBar"></span></div>
+        </div>
+        <div class="meter">
+          <div class="meter-label"><span>Agua (H₂O)</span><span id="waterPct">0%</span></div>
+          <div class="bar"><span id="waterBar"></span></div>
+        </div>
+        <div class="meter">
+          <div class="meter-label"><span>Aire (CO₂)</span><span id="airPct">0%</span></div>
+          <div class="bar"><span id="airBar"></span></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="btnSun" class="btn">☀️ Añadir Luz Solar<br><small>Energía del Sol</small></button>
+        <button id="btnWater" class="btn">💧 Añadir Agua<br><small>Beber por las raíces</small></button>
+        <button id="btnAir" class="btn">🌬️ Añadir Aire (CO₂)<br><small>Respirar CO₂</small></button>
+      </div>
+      <div class="equation">
+        <h4>⚗️ Ecuación de la Fotosíntesis</h4>
+        <div class="equation-formula">6CO₂ + 6H₂O + luz → C₆H₁₂O₆ + 6O₂</div>
+        <div class="products">
+          <div class="product">🍯 Glucosa</div>
+          <div class="product">💨 Oxígeno</div>
+        </div>
+      </div>
+      <div class="score-display">🏆 Puntos: <span id="score">0</span></div>
+      <div class="level-display">🌱 Nivel: <span id="levelDisplay">1</span></div>
+      <div class="achievements">
+        <div class="achievement" id="ach1">🌟 Primera Fotosíntesis</div>
+        <div class="achievement" id="ach2">🔥 Maestro Veloz (5x en 30s)</div>
+        <div class="achievement" id="ach3">🎯 Balance Perfecto</div>
+        <div class="achievement" id="ach4">🌺 Jardín de Flores (20 flores)</div>
+      </div>
+      <div class="camera-controls">
+        <button id="resetCam" class="cam-btn" title="Reiniciar Cámara">📷</button>
+        <button id="topView" class="cam-btn" title="Vista Superior">⬆️</button>
+        <button id="sideView" class="cam-btn" title="Vista Lateral">➡️</button>
+      </div>
+      <div class="brand">Laboratorio de Fotosíntesis</div>
+    </div>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
+  <script>
+  // =============================
+  // Photosynthesis PlayLab (Three.js)
+  // All-in-one file. Clean, commented, kid-friendly visuals.
+  // =============================
+
+  const app = document.getElementById('app');
+  const bubble = document.getElementById('bubble');
+  const sunBar = document.getElementById('sunBar');
+  const waterBar = document.getElementById('waterBar');
+  const airBar = document.getElementById('airBar');
+  const sunPct = document.getElementById('sunPct');
+  const waterPct = document.getElementById('waterPct');
+  const airPct = document.getElementById('airPct');
+  const scoreDisplay = document.getElementById('score');
+  const levelDisplay = document.getElementById('levelDisplay');
+
+  // Simple sound maker (no external files):
+  const audio = new (window.AudioContext || window.webkitAudioContext)();
+  const playTone = (freq=660, dur=0.15, type='sine') => {
+    try {
+      const o = audio.createOscillator();
+      const g = audio.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.value = 0.0001; // soft volume
+      o.connect(g).connect(audio.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.15, audio.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.00001, audio.currentTime + dur);
+      o.stop(audio.currentTime + dur + 0.02);
+    } catch (e) { /* ignore autoplay blocks */ }
+  };
+
+  // Scene setup
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xbfeaff, 40, 180);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(app.clientWidth, app.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  app.appendChild(renderer.domElement);
+
+  const camera = new THREE.PerspectiveCamera(55, app.clientWidth/app.clientHeight, 0.1, 500);
+  camera.position.set(0, 6, 16);
+
+  // Lights: ambient + sunlight (directional)
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+  const sunLight = new THREE.DirectionalLight(0xfff1a1, 1.0);
+  sunLight.position.set(10, 20, 10);
+  scene.add(sunLight);
+
+  // Sky background gradient via big hemisphere
+  const skyGeo = new THREE.SphereGeometry(200, 32, 32);
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0xbfeaff, side: THREE.BackSide });
+  const sky = new THREE.Mesh(skyGeo, skyMat);
+  scene.add(sky);
+
+  // Ground (green)
+  const ground = new THREE.Mesh(
+    new THREE.CylinderGeometry(20, 20, 1, 48),
+    new THREE.MeshLambertMaterial({ color: 0x9ae6b4 })
+  );
+  ground.position.y = -0.5;
+  scene.add(ground);
+
+  // Soil patch (darker circle)
+  const soil = new THREE.Mesh(
+    new THREE.CylinderGeometry(5, 5, 0.6, 32),
+    new THREE.MeshLambertMaterial({ color: 0x8b5a3c })
+  );
+  soil.position.y = -0.2;
+  scene.add(soil);
+
+  // Sun (cartoon)
+  const sunGroup = new THREE.Group();
+  const sunCore = new THREE.Mesh(
+    new THREE.SphereGeometry(1.6, 24, 24),
+    new THREE.MeshBasicMaterial({ color: 0xffd166 })
+  );
+  sunGroup.add(sunCore);
+  const rays = [];
+  for (let i=0;i<12;i++){
+    const ray = new THREE.Mesh(
+      new THREE.ConeGeometry(0.25, 1.1, 12),
+      new THREE.MeshBasicMaterial({ color: 0xffc34d })
+    );
+    ray.position.set(Math.cos(i*Math.PI/6)*2.5, 0, Math.sin(i*Math.PI/6)*2.5);
+    ray.lookAt(0,0,0);
+    sunGroup.add(ray);
+    rays.push(ray);
+  }
+  sunGroup.position.set(-6, 9, -4);
+  scene.add(sunGroup);
+
+  // Clouds (cute spheres)
+  function makeCloud(x, y, z) {
+    const g = new THREE.Group();
+    for (let i=0;i<5;i++){
+      const p = new THREE.Mesh(
+        new THREE.SphereGeometry(1+Math.random()*0.6, 16, 16),
+        new THREE.MeshLambertMaterial({ color: 0xffffff })
+      );
+      p.position.set((Math.random()-0.5)*2, (Math.random()-0.5)*0.6, (Math.random()-0.5)*0.6);
+      g.add(p);
+    }
+    g.position.set(x,y,z);
+    return g;
+  }
+  scene.add(makeCloud(5,10,-8));
+  scene.add(makeCloud(-2,12,-6));
+  scene.add(makeCloud(-8,9,-10));
+
+  // Cartoon Plant (stem + leaves + eyes + smile)
+  const plant = new THREE.Group();
+  scene.add(plant);
+
+  // Stem
+  const stemMat = new THREE.MeshLambertMaterial({ color: 0x34d399 });
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 4, 16), stemMat);
+  stem.position.y = 2;
+  plant.add(stem);
+
+  // Leaves
+  function leaf(angle=0){
+    const leafGeo = new THREE.SphereGeometry(0.9, 16, 16);
+    const leaf = new THREE.Mesh(leafGeo, new THREE.MeshLambertMaterial({ color: 0x22c55e }));
+    leaf.scale.set(1.6,0.6,1);
+    leaf.position.set(Math.cos(angle)*1.2, 2.2, Math.sin(angle)*0.6);
+    leaf.rotation.z = (angle>0? -1: 1) * Math.PI/6;
+    return leaf;
+  }
+  const leafL = leaf(Math.PI/2);
+  const leafR = leaf(-Math.PI/2);
+  plant.add(leafL, leafR);
+
+  // Face (eyes + smile) on stem top (a little head)
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.9, 18, 18), new THREE.MeshLambertMaterial({ color: 0x34d399 }));
+  head.position.y = 4.2;
+  plant.add(head);
+  const eyeGeo = new THREE.SphereGeometry(0.12, 12, 12);
+  const eyeL = new THREE.Mesh(eyeGeo, new THREE.MeshBasicMaterial({ color: 0x111111 }));
+  const eyeR = eyeL.clone();
+  eyeL.position.set(-0.25, 4.35, 0.78);
+  eyeR.position.set(0.25, 4.35, 0.78);
+  plant.add(eyeL, eyeR);
+  const smile = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.05, 8, 24, Math.PI), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
+  smile.rotation.x = Math.PI/2;
+  smile.position.set(0, 3.95, 0.78);
+  plant.add(smile);
+
+  // Flowers (appear on success)
+  const flowers = [];
+  function spawnFlower(){
+    const petalMat = new THREE.MeshLambertMaterial({ color: 0xff8fab });
+    const f = new THREE.Group();
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), new THREE.MeshLambertMaterial({ color: 0xffd166 }));
+    f.add(center);
+    for (let i=0;i<6;i++){
+      const p = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), petalMat);
+      p.scale.set(1.5,1,1);
+      p.position.set(Math.cos(i*Math.PI/3)*0.35, Math.sin(i*Math.PI/3)*0.35, 0);
+      f.add(p);
+    }
+    f.position.set((Math.random()-0.5)*1.2, 4.4 + Math.random()*0.5, 0.4 + Math.random()*0.2);
+    flowers.push(f);
+    plant.add(f);
+  }
+
+  // Enhanced game state
+  const state = {
+    sun: 0, water: 0, air: 0,
+    level: 1, score: 0, totalPhotosynthesis: 0,
+    flowerCount: 0, speedCount: 0, lastSpeedTime: 0,
+    ready() { return this.sun>=1 && this.water>=1 && this.air>=1; },
+    perfectBalance() { 
+      return Math.abs(this.sun - this.water) < 0.1 && 
+             Math.abs(this.water - this.air) < 0.1 && 
+             Math.abs(this.air - this.sun) < 0.1; 
+    }
+  };
+
+  // Achievement system
+  const achievements = {
+    firstPhoto: false,
+    speedMaster: false,
+    perfectBalance: false,
+    flowerGarden: false
+  };
+
+  function updateMeters(){
+    const clamp = v=> Math.max(0, Math.min(1, v));
+    const s = clamp(state.sun), w = clamp(state.water), a = clamp(state.air);
+    sunBar.style.width = (s*100).toFixed(0)+'%';
+    waterBar.style.width = (w*100).toFixed(0)+'%';
+    airBar.style.width = (a*100).toFixed(0)+'%';
+    sunPct.textContent = (s*100).toFixed(0)+'%';
+    waterPct.textContent = (w*100).toFixed(0)+'%';
+    airPct.textContent = (a*100).toFixed(0)+'%';
+
+    // Update score and level display
+    scoreDisplay.textContent = state.score;
+    levelDisplay.textContent = state.level;
+
+    // Educational messages with more detail
+    if (state.ready()){
+      if (state.perfectBalance()) {
+        say("¡Balance perfecto! La planta usa 6CO₂ + 6H₂O + luz solar para hacer glucosa y oxígeno!");
+      } else {
+        say("¡Listo para la fotosíntesis! La planta convertirá CO₂ y agua en azúcar y oxígeno!");
+      }
+    } else {
+      if (s<1) say("Los cloroplastos necesitan luz solar para capturar energía para la fotosíntesis.");
+      else if (w<1) say("Las raíces absorben agua (H₂O) del suelo - ¡esencial para la fotosíntesis!");
+      else if (a<1) say("Los estomas se abren para dejar entrar dióxido de carbono (CO₂) a las hojas.");
+    }
+    plantMood();
+  }
+
+  // Achievement checker
+  function checkAchievements() {
+    if (!achievements.firstPhoto && state.totalPhotosynthesis >= 1) {
+      achievements.firstPhoto = true;
+      document.getElementById('ach1').classList.add('unlocked');
+      say("🌟 ¡Logro desbloqueado: Primera Fotosíntesis!", 3000);
+    }
+    if (!achievements.speedMaster && state.speedCount >= 5) {
+      achievements.speedMaster = true;
+      document.getElementById('ach2').classList.add('unlocked');
+      say("🔥 ¡Logro desbloqueado: Maestro Veloz! ¡5 fotosíntesis en 30 segundos!", 3000);
+    }
+    if (!achievements.perfectBalance && state.perfectBalance() && state.ready()) {
+      achievements.perfectBalance = true;
+      document.getElementById('ach3').classList.add('unlocked');
+      say("🎯 ¡Logro desbloqueado: Balance Perfecto! ¡Todos los recursos perfectamente equilibrados!", 3000);
+    }
+    if (!achievements.flowerGarden && state.flowerCount >= 20) {
+      achievements.flowerGarden = true;
+      document.getElementById('ach4').classList.add('unlocked');
+      say("🌺 ¡Logro desbloqueado: Jardín de Flores! ¡20 hermosas flores cultivadas!", 3000);
+    }
+  }
+
+  // Text bubble helper
+  let bubbleTimer = null;
+  function say(text, hold=2200){
+    bubble.textContent = text;
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(()=>{ 
+      bubble.textContent = state.level > 5 ? 
+        `¡Nivel ${state.level}! ¡Mantén la fotosíntesis funcionando! 🌱` : 
+        "Meta: Dale a la planta ☀️ + 💧 + 🌬️"; 
+    }, hold);
+  }
+
+  // Mood (sad = droopy leaves; happy = bounce)
+  function plantMood(){
+    const happy = state.ready();
+    const t = performance.now()*0.002;
+    if (happy){
+      head.position.y = 4.2 + Math.sin(t)*0.05;
+      smile.rotation.z = Math.sin(t)*0.15;
+      leafL.rotation.z = -Math.PI/8 + Math.sin(t)*0.08;
+      leafR.rotation.z =  Math.PI/8 - Math.sin(t)*0.08;
+    } else {
+      head.position.y = 4.1;
+      smile.rotation.z = 0;
+      leafL.rotation.z = -Math.PI/4;
+      leafR.rotation.z =  Math.PI/4;
+    }
+  }
+
+  // Particles: water drops, CO2 bubbles to plant, O2 bubbles up, sugar sparkles
+  const drops = []; // water
+  const co2 = [];   // air to plant
+  const o2 = [];    // oxygen up
+  const sugar = []; // sparkles
+
+  function makeDrop(){
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), new THREE.MeshBasicMaterial({ color: 0x6ee7b7 }));
+    m.position.set((Math.random()-0.5)*3, 5 + Math.random()*1.5, (Math.random()-0.5)*0.6);
+    m.userData.vy = -0.06 - Math.random()*0.05;
+    drops.push(m); scene.add(m);
+  }
+
+  function makeCO2(){
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), new THREE.MeshBasicMaterial({ color: 0x60a5fa }));
+    m.position.set((-6)+Math.random()*12, 7+Math.random()*3, -6+Math.random()*12);
+    m.userData.speed = 0.02 + Math.random()*0.02;
+    co2.push(m); scene.add(m);
+  }
+
+  function makeO2(){
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), new THREE.MeshBasicMaterial({ color: 0x93c5fd, transparent:true, opacity:0.9 }));
+    m.position.copy(head.position.clone());
+    m.position.add(new THREE.Vector3((Math.random()-0.5)*0.6, 0.1, (Math.random()-0.5)*0.4));
+    m.userData.vy = 0.03 + Math.random()*0.02;
+    m.userData.wobble = Math.random() * Math.PI * 2;
+    o2.push(m); scene.add(m);
+  }
+
+  function makeSugar(){
+    const g = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), new THREE.MeshBasicMaterial({ color: 0xfffb95 }));
+    g.position.copy(head.position.clone());
+    g.position.add(new THREE.Vector3((Math.random()-0.5)*0.6, 0.1, (Math.random()-0.5)*0.4));
+    g.userData.life = 60 + Math.random()*40;
+    sugar.push(g); scene.add(g);
+  }
+
+  // Buttons logic
+  document.getElementById('btnSun').addEventListener('click', () => {
+    playTone(700, 0.12, 'triangle');
+    // brighten sun & increment meter
+    state.sun = Math.min(1, state.sun + 0.34);
+    rays.forEach((r,i)=>{
+      r.scale.setScalar(1.2 + Math.sin(performance.now()*0.01 + i)*0.15);
+    });
+    sunLight.intensity = 1.2;
+    setTimeout(()=> sunLight.intensity = 1.0, 300);
+    say('Las plantas necesitan luz solar para hacer alimento.');
+    updateMeters();
+    checkPhotosynthesis();
+  });
+
+  document.getElementById('btnWater').addEventListener('click', () => {
+    playTone(520, 0.18, 'sine');
+    for (let i=0;i<6;i++) makeDrop();
+    state.water = Math.min(1, state.water + 0.34);
+    say('Las plantas beben agua a través de sus raíces.');
+    updateMeters();
+    checkPhotosynthesis();
+  });
+
+  document.getElementById('btnAir').addEventListener('click', () => {
+    playTone(440, 0.12, 'square');
+    for (let i=0;i<6;i++) makeCO2();
+    state.air = Math.min(1, state.air + 0.34);
+    say('Las plantas respiran dióxido de carbono.');
+    updateMeters();
+    checkPhotosynthesis();
+  });
+
+  function checkPhotosynthesis(){
+    if (state.ready()){
+      // Trigger the magic!
+      doPhotosynthesis();
+    }
+  }
+
+  function doPhotosynthesis(){
+    // Update stats
+    state.totalPhotosynthesis++;
+    const currentTime = performance.now();
+    
+    // Speed tracking for achievements
+    if (currentTime - state.lastSpeedTime < 30000) {
+      state.speedCount++;
+    } else {
+      state.speedCount = 1;
+    }
+    state.lastSpeedTime = currentTime;
+
+    // Score calculation
+    let scoreGain = 100;
+    if (state.perfectBalance()) scoreGain += 50; // Bonus for perfect balance
+    scoreGain += Math.floor(state.level * 10); // Level bonus
+    state.score += scoreGain;
+
+    // Reset needs a bit (not fully) so kids keep playing
+    state.sun = Math.max(0, state.sun - 0.8);
+    state.water = Math.max(0, state.water - 0.8);
+    state.air = Math.max(0, state.air - 0.8);
+    updateMeters();
+
+    // Glow + oxygen + sugar + growth
+    const growAmount = 0.08 + Math.random()*0.06;
+    plant.scale.setScalar(1 + state.level*0.05);
+
+    // spawn effects with more variety
+    const oxygenCount = 12 + Math.floor(state.level * 2);
+    const sugarCount = 8 + Math.floor(state.level * 1.5);
+    const flowerCount = Math.min(5, 2 + Math.floor(state.level * 0.8));
+    
+    for (let i=0;i<oxygenCount;i++){ makeO2(); }
+    for (let i=0;i<sugarCount;i++){ makeSugar(); }
+    for (let i=0;i<flowerCount;i++) { 
+      spawnFlower(); 
+      state.flowerCount++;
+    }
+
+    // Enhanced sound sequence based on level
+    const baseFreq = 880 + (state.level * 20);
+    setTimeout(()=> playTone(baseFreq, 0.12, 'sine'), 60);
+    setTimeout(()=> playTone(baseFreq * 1.125, 0.12, 'sine'), 160);
+    setTimeout(()=> playTone(baseFreq * 1.33, 0.18, 'sine'), 300);
+
+    state.level++;
+
+    // subtle growth of stem & head upward
+    stem.scale.y += growAmount;
+    head.position.y += growAmount*0.9;
+    leafL.position.y += growAmount*0.5;
+    leafR.position.y += growAmount*0.5;
+
+    // temporary green glow with level-based intensity
+    const glowIntensity = Math.min(1, 0.3 + state.level * 0.05);
+    const tmp = new THREE.Color(0x6ee7b7);
+    tmp.lerp(new THREE.Color(0x22d3ee), glowIntensity);
+    const original = stemMat.color.clone();
+    let t0 = performance.now();
+    const glowAnim = () => {
+      const t = (performance.now()-t0)/600;
+      if (t<1){
+        stemMat.color.lerpColors(original, tmp, Math.sin(t*Math.PI));
+        requestAnimationFrame(glowAnim);
+      } else {
+        stemMat.color.copy(original);
+      }
+    };
+    glowAnim();
+
+    // Check achievements after photosynthesis
+    checkAchievements();
+  }
+
+  // Animation loop
+  function animate(){
+    requestAnimationFrame(animate);
+
+    // Spin sun a little
+    sunGroup.rotation.z += 0.002;
+
+    // Float clouds gently
+    scene.traverse((obj)=>{
+      if (obj !== sunGroup && obj.type === 'Group' && obj.children.length>2 && obj !== plant){
+        obj.position.x += Math.sin(performance.now()*0.0003 + obj.id)*0.002;
+      }
+    });
+
+    // Update particles
+    for (let i=drops.length-1;i>=0;i--){
+      const d = drops[i];
+      d.position.y += d.userData.vy;
+      if (d.position.y < -0.1){ // hit soil -> absorbed
+        scene.remove(d); drops.splice(i,1);
+      }
+    }
+
+    for (let i=co2.length-1;i>=0;i--){
+      const b = co2[i];
+      // move toward leaves/head
+      const target = head.position.clone();
+      target.y -= 0.2;
+      const dir = target.clone().sub(b.position); dir.normalize();
+      b.position.add(dir.multiplyScalar(b.userData.speed));
+      if (b.position.distanceTo(target) < 0.3){
+        scene.remove(b); co2.splice(i,1);
+      }
+    }
+
+    for (let i=o2.length-1;i>=0;i--){
+      const b = o2[i]; 
+      b.position.y += b.userData.vy; 
+      b.position.x += Math.sin(performance.now() * 0.005 + b.userData.wobble) * 0.01;
+      b.material.opacity -= 0.006;
+      if (b.material.opacity <= 0.02 || b.position.y > 10){ scene.remove(b); o2.splice(i,1); }
+    }
+
+    for (let i=sugar.length-1;i>=0;i--){
+      const s = sugar[i]; s.userData.life -= 1; s.position.y += 0.01; s.scale.multiplyScalar(1.01);
+      if (s.userData.life<=0){ scene.remove(s); sugar.splice(i,1); }
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Resize handling
+  window.addEventListener('resize', ()=>{
+    renderer.setSize(app.clientWidth, app.clientHeight);
+    camera.aspect = app.clientWidth/app.clientHeight; camera.updateProjectionMatrix();
+  });
+
+  // Camera controls
+  let isOrbitMode = false;
+  let mouseX = 0, mouseY = 0;
+  const originalCameraPos = camera.position.clone();
+
+  document.getElementById('resetCam').addEventListener('click', () => {
+    camera.position.copy(originalCameraPos);
+    camera.lookAt(0, 2, 0);
+    isOrbitMode = false;
+  });
+
+  document.getElementById('topView').addEventListener('click', () => {
+    camera.position.set(0, 15, 2);
+    camera.lookAt(0, 0, 0);
+    isOrbitMode = false;
+  });
+
+  document.getElementById('sideView').addEventListener('click', () => {
+    camera.position.set(12, 6, 0);
+    camera.lookAt(0, 2, 0);
+    isOrbitMode = false;
+  });
+
+  // Simple mouse orbit controls
+  let isMouseDown = false;
+  app.addEventListener('mousedown', (e) => {
+    if (e.target === renderer.domElement) {
+      isMouseDown = true;
+      isOrbitMode = true;
+    }
+  });
+
+  app.addEventListener('mouseup', () => isMouseDown = false);
+  app.addEventListener('mouseleave', () => isMouseDown = false);
+
+  app.addEventListener('mousemove', (e) => {
+    if (isMouseDown && isOrbitMode) {
+      const deltaX = e.movementX * 0.01;
+      const deltaY = e.movementY * 0.01;
+      
+      // Simple orbit around the plant
+      const radius = camera.position.distanceTo(new THREE.Vector3(0, 2, 0));
+      const phi = Math.atan2(camera.position.z, camera.position.x) - deltaX;
+      const theta = Math.acos(Math.max(-1, Math.min(1, (camera.position.y - 2) / radius))) - deltaY;
+      
+      camera.position.x = radius * Math.sin(Math.max(0.1, Math.min(Math.PI - 0.1, theta))) * Math.cos(phi);
+      camera.position.z = radius * Math.sin(Math.max(0.1, Math.min(Math.PI - 0.1, theta))) * Math.sin(phi);
+      camera.position.y = 2 + radius * Math.cos(Math.max(0.1, Math.min(Math.PI - 0.1, theta)));
+      
+      camera.lookAt(0, 2, 0);
+    }
+  });
+
+  // First meters
+  updateMeters();
+  say('¡Bienvenido al Laboratorio de Fotosíntesis! ¡Ayuda a la planta a crecer dándole luz solar, agua y CO₂!');
+  </script>
+
+<script>
+  // Sistema de comunicación con parent frame
+  function sendMessageToParent(type, payload) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type, payload }, '*');
+        console.log('📤 [Game] Mensaje enviado al parent:', type, payload);
+      }
+    } catch (error) {
+      console.error('❌ [Game] Error enviando mensaje al parent:', error);
+    }
+  }
+  
+  // Notificar que el juego está listo
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      sendMessageToParent('GAME_READY', { 
+        timestamp: Date.now(),
+        title: 'Laboratorio de Fotosíntesis',
+        gameType: 'threejs'
+      });
+    }, 1000);
+  });
+  
+  // Escuchar mensajes del parent
+  window.addEventListener('message', function(event) {
+    if (event.data.type === 'PARENT_READY') {
+      console.log('✅ [Game] Parent frame está listo');
+    }
+  });
+  
+  // Sistema de eventos de juego personalizable
+  let gameStarted = false;
+  let gameScore = 0;
+  let gameStartTime = Date.now();
+  
+  function startGame() {
+    if (!gameStarted) {
+      gameStarted = true;
+      gameStartTime = Date.now();
+      sendMessageToParent('GAME_STARTED', { timestamp: gameStartTime });
+    }
+  }
+  
+  function updateScore(score) {
+    gameScore = score;
+    sendMessageToParent('SCORE_UPDATE', { score: gameScore });
+  }
+  
+  function completeGame(finalScore = null) {
+    const timeSpent = Math.floor((Date.now() - gameStartTime) / 1000);
+    sendMessageToParent('GAME_COMPLETED', { 
+      score: finalScore || gameScore,
+      timeSpent: timeSpent,
+      completed: true,
+      progress: 100
+    });
+  }
+  
+  // Auto-detección de eventos comunes
+  document.addEventListener('click', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  document.addEventListener('keydown', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  // Prevenir context menu y selección
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+  
+  // Exponer funciones globalmente para uso en juegos
+  window.gameAPI = {
+    start: startGame,
+    updateScore: updateScore,
+    complete: completeGame,
+    sendMessage: sendMessageToParent
+  };
+  
+  console.log('🎮 [Game] Sistema de comunicación inicializado');
+</script>\n</body>
+</html>

@@ -22,6 +22,74 @@ export interface Course {
   modules: Module[]
   thumbnail: string
   createdAt: Date
+  // Propiedades adicionales para el dashboard
+  name?: string
+  difficulty?: string
+  status?: string
+  students?: number
+  revenue?: number
+  progress?: number
+  completedLessons?: number
+  totalLessons?: number
+  nextClass?: string
+  enrollments?: number
+  completionRate?: number
+  updatedAt?: Date
+}
+
+// Tipos del backend que coinciden con Prisma
+export interface Subject {
+  id: string
+  name: string
+  description?: string
+  category?: string
+  price?: number
+  duration?: string
+  difficulty?: string
+  subjectType?: string
+  curriculum?: string
+  objectives?: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy?: string
+  subtopics?: Subtopic[]
+}
+
+export interface Subtopic {
+  id: string
+  name: string
+  description?: string
+  subjectId: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+export interface AIGame {
+  id: string
+  subtopicId: string
+  title: string
+  description?: string
+  gameType: string
+  difficulty: string
+  htmlContent?: string
+  playCount: number
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface AIFeedback {
+  id: string
+  subtopicId: string
+  feedbackType: string
+  title: string
+  content: string
+  recommendations?: string[]
+  resources?: string[]
+  estimatedTime?: number
+  difficultyLevel?: string
+  isActive: boolean
+  createdAt: Date
 }
 
 export interface Module {

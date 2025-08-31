@@ -155,7 +155,7 @@ export function GameGenerator({
 
     try {
       // Simular progreso de pasos
-      for (let i = 0; i < steps.length; i++) {
+      for (let i = 0; i < generationSteps.length; i++) {
         setCurrentStep(i);
         setSteps(prev => prev.map((step, index) => ({
           ...step,
@@ -164,7 +164,7 @@ export function GameGenerator({
         })));
         
         // Delay para mostrar progreso
-        if (i < steps.length - 1) {
+        if (i < generationSteps.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
@@ -172,21 +172,33 @@ export function GameGenerator({
       // Generar el juego
       const response = await apiService.generateAIGame(subtopicId, formData);
       
+      console.log('🔍 [GameGenerator] Response completa:', response);
+      
       if (response.success && response.data) {
-        const newGame = response.data.game;
-        setGeneratedGame(newGame);
+        // El backend puede devolver el juego en data.game o data directamente
+        const newGame = response.data.game || response.data;
+        console.log('🎮 [GameGenerator] Juego extraído:', newGame);
         
-        // Completar todos los pasos
-        setSteps(prev => prev.map(step => ({ ...step, completed: true, current: false })));
-        
-        toast({
-          title: "🎮 ¡Juego generado exitosamente!",
-          description: `${newGame.title} está listo para jugar`,
-        });
-        
-        onGameGenerated?.(newGame);
+        if (newGame && newGame.title) {
+          setGeneratedGame(newGame);
+          
+          // Completar todos los pasos
+          setSteps(prev => prev.map(step => ({ ...step, completed: true, current: false })));
+          
+          toast({
+            title: "🎮 ¡Juego generado exitosamente!",
+            description: `${newGame.title} está listo para jugar`,
+          });
+          
+          onGameGenerated?.(newGame);
+        } else {
+          console.error('❌ [GameGenerator] Estructura de juego inválida:', newGame);
+          console.error('❌ [GameGenerator] Estructura de response.data:', response.data);
+          throw new Error('El juego generado no tiene la estructura esperada');
+        }
       } else {
-        throw new Error(response.error || 'Error desconocido');
+        console.error('❌ [GameGenerator] Error en response:', response);
+        throw new Error(response.error || 'Error desconocido al generar el juego');
       }
     } catch (error: any) {
       console.error('Error generando juego:', error);
@@ -260,7 +272,7 @@ export function GameGenerator({
                         ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
                         : 'border-border hover:border-primary/50'
                     }`}
-                    onClick={() => setFormData(prev => ({ ...prev, gameType: option.value }))}
+                    onClick={() => setFormData(prev => ({ ...prev, gameType: option.value as any }))}
                   >
                     {option.recommended && (
                       <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-pink-500">

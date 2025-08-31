@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventura Ethereum - Juego Educativo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Orbitron', 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            user-select: none;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* Panel Principal de UI */
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 300px;
+        }
+        
+        #playerInfo {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .info-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        #level {
+            grid-column: span 2;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+        }
+        
+        .progress-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+            height: 10px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
+        }
+        
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #764ba2, #667eea);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Sistema de Tutorial */
+        #tutorial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            color: white;
+            max-width: 500px;
+            text-align: center;
+            border: 3px solid #ffd700;
+            display: none;
+            z-index: 200;
+        }
+        
+        #tutorial h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+        
+        .tutorial-step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        /* Sistema de Logros */
+        #achievements {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            max-width: 250px;
+        }
+        
+        .achievement {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .achievement.unlocked {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
+        }
+        
+        .achievement.locked {
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0.5;
+        }
+        
+        /* Sistema de Quiz */
+        #quiz {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            color: white;
+            max-width: 600px;
+            display: none;
+            z-index: 200;
+            border: 3px solid #667eea;
+        }
+        
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #667eea;
+        }
+        
+        .quiz-option.correct {
+            background: rgba(46, 204, 113, 0.3);
+            border-color: #2ecc71;
+        }
+        
+        .quiz-option.incorrect {
+            background: rgba(231, 76, 60, 0.3);
+            border-color: #e74c3c;
+        }
+        
+        /* Sistema de Mensajes Mejorado */
+        #message {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px 30px;
+            border-radius: 20px;
+            color: white;
+            font-size: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: none;
+            max-width: 500px;
+            text-align: center;
+            border: 2px solid #ffd700;
+            z-index: 150;
+        }
+        
+        /* Inventario */
+        #inventory {
+            position: absolute;
+            bottom: 150px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .inventory-item {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            line-height: 46px;
+            font-size: 20px;
+        }
+        
+        .inventory-item.owned {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        /* Animaciones CSS */
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 4px 25px rgba(255, 215, 0, 0.8); }
+        }
+        
+        @keyframes slideInDown {
+            0% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutUp {
+            0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+            100% { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #ui {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                min-width: unset;
+            }
+            
+            #achievements {
+                position: relative;
+                max-width: none;
+                margin: 10px;
+            }
+            
+            #playerInfo {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .network-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body style="margin:0;padding:0;overflow:hidden;">
+    <div id="gameContainer">
+        <!-- Panel Principal de UI -->
+        <div id="ui">
+            <div id="playerInfo">
+                <div class="info-item">
+                    <div class="info-value" id="ethAmount">5</div>
+                    <div class="info-label">🪙 Balance ETH</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="experience">0</div>
+                    <div class="info-label">⭐ Experiencia</div>
+                </div>
+                <div class="info-item" id="level">
+                    <div class="info-value">Nivel <span id="currentLevel">1</span></div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="levelProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="button" onclick="startClickingGame()">🎯 Juego de Clicks Rápidos</button>
+            <button class="button" onclick="startPuzzleChallenge()" id="puzzleButton">🧩 Desafío de Puzzle</button>
+            <button class="button" onclick="startExplorationMode()" id="exploreButton">🔍 Modo Exploración</button>
+            <button class="button" onclick="startQuiz()" id="quizButton">📚 Quiz de Ethereum</button>
+            <button class="button" onclick="openTutorial()">❓ Tutorial</button>
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 12px; opacity: 0.8; margin-bottom: 10px;">🕹️ Controles:</div>
+                <div style="font-size: 11px; opacity: 0.7;">WASD - Mover Avatar</div>
+                <div style="font-size: 11px; opacity: 0.7;">Click - Recolectar/Interactuar</div>
+                <div style="font-size: 11px; opacity: 0.7;">Mouse - Rotar Cámara</div>
+            </div>
+        </div>
+        
+        <!-- Panel de Logros -->
+        <div id="achievements">
+            <h3>🏆 Logros</h3>
+            <div id="achievementsList">
+                <!-- Los logros se poblarán con JS -->
+            </div>
+        </div>
+        
+        <!-- Sistema de Tutorial -->
+        <div id="tutorial">
+            <h2>¡Bienvenido a la Aventura Ethereum!</h2>
+            <div id="tutorialContent">
+                <!-- Contenido del tutorial se poblará con JS -->
+            </div>
+            <button class="button" onclick="nextTutorialStep()">Continuar</button>
+            <button class="button" onclick="closeTutorial()">Saltar Tutorial</button>
+        </div>
+        
+        <!-- Sistema de Quiz -->
+        <div id="quiz">
+            <h2 id="quizTitle">Quiz de Conocimiento Ethereum</h2>
+            <p id="quizQuestion"></p>
+            <div id="quizOptions">
+                <!-- Opciones del quiz se poblarán con JS -->
+            </div>
+            <div id="quizResult" style="display: none;">
+                <p id="quizExplanation"></p>
+                <button class="button" onclick="nextQuestion()">Siguiente Pregunta</button>
+                <button class="button" onclick="closeQuiz()">Terminar Quiz</button>
+            </div>
+        </div>
+        
+        <!-- Inventario -->
+        <div id="inventory">
+            <h4>💼 Inventario</h4>
+            <div id="inventoryItems">
+                <div class="inventory-item" data-item="hat" title="Sombrero Mágico">🎩</div>
+                <div class="inventory-item" data-item="crystal" title="Cristal ETH">💎</div>
+                <div class="inventory-item" data-item="key" title="Llave Inteligente">🔑</div>
+                <div class="inventory-item" data-item="scroll" title="Pergamino de Sabiduría">📜</div>
+            </div>
+        </div>
+        
+        <!-- Estado de la Red -->
+        <div class="network-status">
+            <div>🌐 Red Ethereum</div>
+            <div id="networkStatus">Lista</div>
+            <div>⛽ Gas: <span id="gasPrice">20 Gwei</span></div>
+            <div>📦 Bloque: <span id="blockNumber">18,500,000</span></div>
+        </div>
+        
+        <!-- Sistema de Mensajes -->
+        <div id="message"></div>
+        
+        <!-- Mini-juego de Clicks -->
+        <div id="clickingGame" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; color: white; border: 3px solid #ff6b6b; z-index: 200; text-align: center;">
+            <h2>🎯 Juego de Clicks Rápidos</h2>
+            <p id="clickGameInstructions">¡Haz clic en las monedas ETH que aparecen antes de que desaparezcan!</p>
+            <div id="clickGameStats">
+                <div>⏰ Tiempo: <span id="gameTimeLeft">30</span>s</div>
+                <div>🎯 Puntos: <span id="gameScore">0</span></div>
+                <div>🪙 ETH Ganado: <span id="ethEarned">0</span></div>
+            </div>
+            <div id="clickGameArea" style="width: 400px; height: 300px; border: 2px solid #667eea; margin: 20px auto; position: relative; border-radius: 10px;">
+                <!-- Aquí aparecerán los objetivos clicables -->
+            </div>
+            <button class="button" onclick="endMinigame()">Terminar Juego</button>
+        </div>
+        
+        <!-- Puzzle Challenge -->
+        <div id="puzzleChallenge" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; color: white; border: 3px solid #2ecc71; z-index: 200; text-align: center;">
+            <h2>🧩 Desafío de Puzzle</h2>
+            <p>¡Resuelve el puzzle de conexiones blockchain!</p>
+            <div id="puzzleGrid" style="display: grid; grid-template-columns: repeat(4, 60px); gap: 10px; margin: 20px auto; justify-content: center;">
+                <!-- Grid del puzzle -->
+            </div>
+            <div id="puzzleStats">
+                <div>🎯 Movimientos: <span id="puzzleMoves">0</span></div>
+                <div>⏰ Tiempo: <span id="puzzleTime">0</span>s</div>
+            </div>
+            <button class="button" onclick="resetPuzzle()">Reiniciar</button>
+            <button class="button" onclick="endMinigame()">Cerrar</button>
+        </div>
+        
+        <!-- Exploration Mode -->
+        <div id="explorationPanel" style="display: none; position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 20px; border-radius: 15px; color: white; text-align: center;">
+            <h3>🔍 Modo Exploración Activo</h3>
+            <p id="explorationObjective">Encuentra 5 objetos ocultos en el mundo</p>
+            <div>📍 Encontrados: <span id="objectsFound">0</span>/5</div>
+            <button class="button" onclick="endExploration()">Terminar Exploración</button>
+        </div>
+        
+        <!-- Game Objectives -->
+        <div id="objectives" style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); background: rgba(0,0,0,0.8); padding: 15px; border-radius: 15px; color: white; max-width: 200px; display: none;">
+            <h4>🎯 Objetivos Actuales</h4>
+            <div id="objectivesList">
+                <!-- Objetivos dinámicos -->
+            </div>
+        </div>
+        
+        <!-- Instrucciones -->
+        <div id="instructions">
+            🎮 ¡Usa WASD para mover tu avatar y explora el mundo! ¡Haz clic en objetos para interactuar y completa mini-juegos para aprender sobre Ethereum!
+        </div>
+    </div>
+
+    <script>
+        // Variables del juego mejoradas
+        let scene, camera, renderer;
+        let ethCoins = [];
+        let networkNodes = [];
+        let magicDoor, avatar;
+        let ethCount = 5;
+        let experience = 0;
+        let currentLevel = 1;
+        let doorOpen = false;
+        let inventory = {};
+        let achievements = [];
+        let tutorialStep = 0;
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+        
+        // Controles de mouse y teclado
+        let mouseX = 0, mouseY = 0;
+        let isMouseDown = false;
+        let keys = {};
+        let avatarController = {
+            moveSpeed: 0.1,
+            targetPosition: new THREE.Vector3(),
+            isMoving: false
+        };
+        
+        // Estados de mini-juegos
+        let currentMinigame = null;
+        let minigameActive = false;
+        let clickTargets = [];
+        let gameTimer = 0;
+        let hiddenObjects = [];
+        
+        // Pasos del Tutorial
+        const tutorialSteps = [
+            {
+                title: "¡Bienvenido a Ethereum!",
+                content: "Ethereum es una plataforma blockchain que ejecuta contratos inteligentes. ¡En este juego aprenderás haciendo!",
+                action: "none"
+            },
+            {
+                title: "Tu Balance de ETH",
+                content: "ETH (Ether) es la moneda nativa de Ethereum. Puedes ver tu balance en el panel superior izquierdo.",
+                action: "highlight-eth"
+            },
+            {
+                title: "Recolectando ETH",
+                content: "Haz clic en 'Recolectar ETH' para obtener más Ether. Esto simula ganar ETH a través de varias actividades.",
+                action: "collect-eth"
+            },
+            {
+                title: "Contratos Inteligentes",
+                content: "Los contratos inteligentes son contratos autoejecutables. ¡La puerta mágica requiere 3 ETH para abrir - esta es una regla de contrato inteligente!",
+                action: "highlight-door"
+            },
+            {
+                title: "Actividad de la Red",
+                content: "¡Observa cómo se iluminan los nodos de la red cuando haces transacciones. Esto muestra cómo funciona la red descentralizada de Ethereum!",
+                action: "show-network"
+            }
+        ];
+        
+        // Preguntas del Quiz
+        const quizQuestions = [
+            {
+                question: "¿Qué es Ethereum?",
+                options: [
+                    "Solo una criptomoneda",
+                    "Una plataforma blockchain para contratos inteligentes",
+                    "Una plataforma de redes sociales",
+                    "Un intercambio de trading"
+                ],
+                correct: 1,
+                explanation: "Ethereum es una plataforma blockchain descentralizada que permite contratos inteligentes y aplicaciones descentralizadas (DApps)."
+            },
+            {
+                question: "¿Qué es ETH?",
+                options: [
+                    "La criptomoneda nativa de Ethereum",
+                    "Un tipo de contrato inteligente",
+                    "Un lenguaje de programación",
+                    "Una aplicación de billetera"
+                ],
+                correct: 0,
+                explanation: "ETH (Ether) es la criptomoneda nativa de la red Ethereum, utilizada para pagar transacciones y servicios computacionales."
+            },
+            {
+                question: "¿Qué son los contratos inteligentes?",
+                options: [
+                    "Contratos físicos de papel",
+                    "Contratos autoejecutables con términos escritos en código",
+                    "Documentos legales",
+                    "Acuerdos comerciales"
+                ],
+                correct: 1,
+                explanation: "Los contratos inteligentes son contratos autoejecutables donde los términos están escritos directamente en código y se ejecutan automáticamente."
+            },
+            {
+                question: "¿Qué es el gas en Ethereum?",
+                options: [
+                    "Combustible para autos",
+                    "Un tipo de criptomoneda",
+                    "La tarifa requerida para realizar transacciones",
+                    "Un lenguaje de programación"
+                ],
+                correct: 2,
+                explanation: "El gas es la tarifa requerida para realizar transacciones o ejecutar contratos en la red Ethereum."
+            }
+        ];
+        
+        // Definiciones de Logros
+        const achievementDefinitions = [
+            { id: "first_eth", name: "Primer ETH", description: "Recolecta tu primer ETH", icon: "🪙", unlocked: false },
+            { id: "door_opener", name: "Abridor de Puertas", description: "Abre la puerta de contrato inteligente", icon: "🚪", unlocked: false },
+            { id: "fashionable", name: "A la Moda", description: "Compra un sombrero mágico", icon: "🎩", unlocked: false },
+            { id: "quiz_master", name: "Maestro del Quiz", description: "Completa el quiz de Ethereum", icon: "🧠", unlocked: false },
+            { id: "rich_player", name: "Coleccionista ETH", description: "Acumula 10 ETH", icon: "💰", unlocked: false },
+            { id: "level_up", name: "Subida de Nivel", description: "Alcanza el nivel 2", icon: "⬆️", unlocked: false }
+        ];
+        
+        // Inicializar el juego mejorado
+        function init() {
+            // Inicializar logros
+            achievements = [...achievementDefinitions];
+            
+            // Crear escena
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x667eea, 10, 100);
+            
+            // Crear cámara
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+            
+            // Crear renderizador
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x667eea);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+            
+            // Agregar luces mejoradas
+            setupEnhancedLighting();
+            
+            // Crear mundo mejorado
+            createEnhancedGround();
+            
+            // Crear monedas ETH flotantes
+            createETHCoins();
+            
+            // Crear nodos de red
+            createNetworkNodes();
+            
+            // Crear puerta mágica
+            createMagicDoor();
+            
+            // Crear avatar
+            createAvatar();
+            
+                    // Agregar controles de mouse y teclado
+        setupEnhancedControls();
+            
+            // Inicializar UI
+            updateUI();
+            updateAchievements();
+            
+            // Mostrar tutorial para nuevos jugadores
+            if (!localStorage.getItem('ethereum_game_tutorial_completed')) {
+                setTimeout(openTutorial, 1000);
+            }
+            
+            // Iniciar loop de animación
+            animate();
+            
+            // Actualizar información blockchain
+            updateBlockchainInfo();
+            setInterval(updateBlockchainInfo, 5000);
+        }
+        
+        function setupEnhancedLighting() {
+            // Sistema de iluminación mejorado
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            // Múltiples luces de colores para ambiente
+            const lights = [
+                { color: 0xff6b6b, position: [10, 8, 10] },
+                { color: 0x667eea, position: [-10, 8, -10] },
+                { color: 0x2ecc71, position: [0, 15, 0] }
+            ];
+            
+            lights.forEach(lightData => {
+                const light = new THREE.PointLight(lightData.color, 0.3, 30);
+                light.position.set(...lightData.position);
+                scene.add(light);
+            });
+        }
+        
+        function createEnhancedGround() {
+            // Suelo principal mejorado
+            const geometry = new THREE.PlaneGeometry(60, 60);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: 0x4ecdc4,
+                transparent: true,
+                opacity: 0.8
+            });
+            const ground = new THREE.Mesh(geometry, material);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Agregar patrón hexagonal (como estructura blockchain)
+            for (let i = 0; i < 30; i++) {
+                const hexGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 6);
+                const hexMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x667eea,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const hex = new THREE.Mesh(hexGeometry, hexMaterial);
+                hex.position.set(
+                    (Math.random() - 0.5) * 50,
+                    0.05,
+                    (Math.random() - 0.5) * 50
+                );
+                hex.rotation.y = Math.random() * Math.PI * 2;
+                scene.add(hex);
+            }
+            
+            // Elementos decorativos mejorados
+            for (let i = 0; i < 25; i++) {
+                const flower = createEnhancedFlower();
+                flower.position.set(
+                    (Math.random() - 0.5) * 50,
+                    0,
+                    (Math.random() - 0.5) * 50
+                );
+                scene.add(flower);
+            }
+        }
+        
+        function createEnhancedFlower() {
+            const group = new THREE.Group();
+            
+            // Flor mejorada con pétalos brillantes
+            const petalCount = 6;
+            for (let i = 0; i < petalCount; i++) {
+                const petalGeometry = new THREE.SphereGeometry(0.2, 8, 6);
+                const petalMaterial = new THREE.MeshLambertMaterial({ 
+                    color: new THREE.Color().setHSL(Math.random(), 0.7, 0.6),
+                    emissive: new THREE.Color().setHSL(Math.random(), 0.3, 0.1),
+                    emissiveIntensity: 0.2
+                });
+                const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+                const angle = (i / petalCount) * Math.PI * 2;
+                petal.position.set(Math.cos(angle) * 0.4, 0.8, Math.sin(angle) * 0.4);
+                group.add(petal);
+            }
+            
+            // Centro brillante
+            const centerGeometry = new THREE.SphereGeometry(0.15, 8, 6);
+            const centerMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffd700,
+                emissive: 0xffd700,
+                emissiveIntensity: 0.3
+            });
+            const center = new THREE.Mesh(centerGeometry, centerMaterial);
+            center.position.y = 0.8;
+            group.add(center);
+            
+            // Tallo
+            const stemGeometry = new THREE.CylinderGeometry(0.05, 0.08, 0.8);
+            const stemMaterial = new THREE.MeshLambertMaterial({ color: 0x2ecc71 });
+            const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+            stem.position.y = 0.4;
+            group.add(stem);
+            
+            return group;
+        }
+        
+        function createETHCoins() {
+            for (let i = 0; i < 8; i++) {
+                const coin = createETHCoin();
+                coin.position.set(
+                    (Math.random() - 0.5) * 20,
+                    2 + Math.random() * 3,
+                    (Math.random() - 0.5) * 20
+                );
+                coin.userData = { 
+                    originalY: coin.position.y,
+                    floatOffset: Math.random() * Math.PI * 2
+                };
+                ethCoins.push(coin);
+                scene.add(coin);
+            }
+        }
+        
+        function createETHCoin() {
+            const group = new THREE.Group();
+            
+            // Main coin body
+            const geometry = new THREE.CylinderGeometry(0.8, 0.8, 0.2, 32);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: 0x627eea,
+                emissive: 0x1a237e,
+                emissiveIntensity: 0.2
+            });
+            const coin = new THREE.Mesh(geometry, material);
+            coin.castShadow = true;
+            group.add(coin);
+            
+            // Ethereum logo (simplified diamond shape)
+            const logoGeometry = new THREE.ConeGeometry(0.3, 0.4, 4);
+            const logoMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xffffff,
+                emissive: 0x667eea,
+                emissiveIntensity: 0.3
+            });
+            const logo = new THREE.Mesh(logoGeometry, logoMaterial);
+            logo.position.y = 0.15;
+            logo.rotation.y = Math.PI / 4;
+            group.add(logo);
+            
+            // Glow effect
+            const glowGeometry = new THREE.SphereGeometry(1.2, 16, 16);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0x627eea,
+                transparent: true,
+                opacity: 0.1
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            group.add(glow);
+            
+            return group;
+        }
+        
+        function createNetworkNodes() {
+            const positions = [
+                [-15, 8, -15], [15, 8, -15], [15, 8, 15], [-15, 8, 15],
+                [0, 12, -20], [0, 12, 20], [-20, 6, 0], [20, 6, 0]
+            ];
+            
+            positions.forEach(pos => {
+                const node = createNetworkNode();
+                node.position.set(pos[0], pos[1], pos[2]);
+                networkNodes.push(node);
+                scene.add(node);
+            });
+        }
+        
+        function createNetworkNode() {
+            const group = new THREE.Group();
+            
+            // Computer body
+            const bodyGeometry = new THREE.BoxGeometry(1, 0.8, 1.2);
+            const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x34495e });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            group.add(body);
+            
+            // Screen
+            const screenGeometry = new THREE.BoxGeometry(0.8, 0.6, 0.1);
+            const screenMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x2c3e50,
+                emissive: 0x3498db,
+                emissiveIntensity: 0.3
+            });
+            const screen = new THREE.Mesh(screenGeometry, screenMaterial);
+            screen.position.z = 0.65;
+            group.add(screen);
+            
+            // Connection lines (will be animated)
+            group.userData = { active: false };
+            
+            return group;
+        }
+        
+        function createMagicDoor() {
+            const group = new THREE.Group();
+            
+            // Door frame
+            const frameGeometry = new THREE.BoxGeometry(4, 6, 0.5);
+            const frameMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x8e44ad,
+                emissive: 0x2d1b69,
+                emissiveIntensity: 0.2
+            });
+            const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+            group.add(frame);
+            
+            // Door panels
+            const doorGeometry = new THREE.BoxGeometry(1.8, 5.5, 0.3);
+            const doorMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x9b59b6,
+                emissive: 0x3b1261,
+                emissiveIntensity: 0.1
+            });
+            
+            const leftDoor = new THREE.Mesh(doorGeometry, doorMaterial);
+            leftDoor.position.set(-0.9, 0, 0.2);
+            leftDoor.userData = { side: 'left' };
+            group.add(leftDoor);
+            
+            const rightDoor = new THREE.Mesh(doorGeometry, doorMaterial);
+            rightDoor.position.set(0.9, 0, 0.2);
+            rightDoor.userData = { side: 'right' };
+            group.add(rightDoor);
+            
+            // Magic particles around door
+            for (let i = 0; i < 10; i++) {
+                const particle = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.1, 6, 6),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0xff6b6b,
+                        transparent: true,
+                        opacity: 0.8
+                    })
+                );
+                particle.position.set(
+                    (Math.random() - 0.5) * 6,
+                    (Math.random() - 0.5) * 8,
+                    Math.random() * 2
+                );
+                particle.userData = { 
+                    originalPos: particle.position.clone(),
+                    floatSpeed: 0.02 + Math.random() * 0.03
+                };
+                group.add(particle);
+            }
+            
+            group.position.set(0, 3, -8);
+            magicDoor = group;
+            scene.add(group);
+        }
+        
+        function createAvatar() {
+            const group = new THREE.Group();
+            
+            // Body
+            const bodyGeometry = new THREE.CylinderGeometry(0.8, 0.8, 2);
+            const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x3498db });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 1;
+            body.castShadow = true;
+            group.add(body);
+            
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.6, 16, 16);
+            const headMaterial = new THREE.MeshLambertMaterial({ color: 0xfdbcb4 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 2.6;
+            head.castShadow = true;
+            group.add(head);
+            
+            // Eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.2, 2.7, 0.5);
+            group.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.2, 2.7, 0.5);
+            group.add(rightEye);
+            
+            // Smile
+            const smileGeometry = new THREE.TorusGeometry(0.2, 0.05, 8, 16, Math.PI);
+            const smileMaterial = new THREE.MeshLambertMaterial({ color: 0xe74c3c });
+            const smile = new THREE.Mesh(smileGeometry, smileMaterial);
+            smile.position.set(0, 2.4, 0.5);
+            smile.rotation.z = Math.PI;
+            group.add(smile);
+            
+            group.position.set(3, 0, 3);
+            avatar = group;
+            scene.add(group);
+        }
+        
+        function setupEnhancedControls() {
+            // Controles de mouse existentes
+            renderer.domElement.addEventListener('mousedown', onMouseDown, false);
+            renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+            renderer.domElement.addEventListener('mouseup', onMouseUp, false);
+            renderer.domElement.addEventListener('wheel', onMouseWheel, false);
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Controles de teclado para el avatar
+            window.addEventListener('keydown', onKeyDown, false);
+            window.addEventListener('keyup', onKeyUp, false);
+            
+            // Detección de clicks en objetos 3D
+            renderer.domElement.addEventListener('click', onEnhancedObjectClick, false);
+        }
+        
+        function onKeyDown(event) {
+            keys[event.code] = true;
+            
+            // Prevenir scroll con flechas
+            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) {
+                event.preventDefault();
+            }
+        }
+        
+        function onKeyUp(event) {
+            keys[event.code] = false;
+        }
+        
+        function onMouseWheel(event) {
+            // Control de zoom
+            const zoomSpeed = 0.1;
+            const direction = event.deltaY > 0 ? 1 : -1;
+            
+            camera.position.multiplyScalar(1 + direction * zoomSpeed);
+            
+            // Límites de zoom
+            const distance = camera.position.length();
+            if (distance < 5) camera.position.setLength(5);
+            if (distance > 50) camera.position.setLength(50);
+        }
+        
+        function onEnhancedObjectClick(event) {
+            // Sistema de raycasting mejorado para detectar clicks en objetos 3D
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Verificar clicks en monedas ETH
+            const coinIntersects = raycaster.intersectObjects(ethCoins, true);
+            if (coinIntersects.length > 0 && !minigameActive) {
+                collectSpecificCoin(coinIntersects[0].object.parent || coinIntersects[0].object);
+                return;
+            }
+            
+            // Verificar clicks en objetos ocultos durante exploración
+            if (currentMinigame === 'exploration') {
+                const hiddenIntersects = raycaster.intersectObjects(hiddenObjects, true);
+                if (hiddenIntersects.length > 0) {
+                    findHiddenObject(hiddenIntersects[0].object.parent || hiddenIntersects[0].object);
+                    return;
+                }
+            }
+            
+            // Verificar clicks en puerta mágica
+            if (magicDoor) {
+                const doorIntersects = raycaster.intersectObjects([magicDoor], true);
+                if (doorIntersects.length > 0) {
+                    tryOpenDoor();
+                    return;
+                }
+            }
+        }
+        
+        function onMouseDown(event) {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+        
+        function onMouseMove(event) {
+            if (isMouseDown) {
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+                
+                // Rotate camera around the scene
+                const spherical = new THREE.Spherical();
+                spherical.setFromVector3(camera.position);
+                spherical.theta -= deltaX * 0.01;
+                spherical.phi += deltaY * 0.01;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                
+                camera.position.setFromSpherical(spherical);
+                camera.lookAt(0, 2, 0);
+                
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            }
+        }
+        
+        function onMouseUp() {
+            isMouseDown = false;
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Control del Avatar con WASD - MECÁNICAS REALES DE JUEGO
+        function updateAvatarMovement() {
+            if (!avatar || minigameActive) return;
+            
+            let moveVector = new THREE.Vector3();
+            
+            // Detectar teclas presionadas
+            if (keys['KeyW'] || keys['ArrowUp']) moveVector.z -= avatarController.moveSpeed;
+            if (keys['KeyS'] || keys['ArrowDown']) moveVector.z += avatarController.moveSpeed;
+            if (keys['KeyA'] || keys['ArrowLeft']) moveVector.x -= avatarController.moveSpeed;
+            if (keys['KeyD'] || keys['ArrowRight']) moveVector.x += avatarController.moveSpeed;
+            
+            // Aplicar movimiento
+            if (moveVector.length() > 0) {
+                avatar.position.add(moveVector);
+                avatarController.isMoving = true;
+                
+                // Límites del mundo
+                avatar.position.x = Math.max(-25, Math.min(25, avatar.position.x));
+                avatar.position.z = Math.max(-25, Math.min(25, avatar.position.z));
+                
+                // Animación de caminar simple
+                avatar.rotation.y += Math.sin(Date.now() * 0.01) * 0.02;
+                
+                // Verificar colisiones con monedas
+                checkCoinCollisions();
+                
+            } else {
+                avatarController.isMoving = false;
+            }
+        }
+        
+        function checkCoinCollisions() {
+            ethCoins.forEach((coin, index) => {
+                if (coin.userData.collectable) {
+                    const distance = avatar.position.distanceTo(coin.position);
+                    if (distance < 2) {
+                        collectSpecificCoin(coin);
+                    }
+                }
+            });
+        }
+        
+        function collectSpecificCoin(coin) {
+            if (!coin.userData.collectable) return;
+            
+            const reward = 1;
+            ethCount += reward;
+            experience += 5;
+            coin.userData.collectable = false;
+            
+            // Efecto de partículas
+            createCollectionEffect(coin.position);
+            
+            const collectAnimation = () => {
+                coin.scale.multiplyScalar(1.1);
+                coin.rotation.y += 0.2;
+                coin.position.y += 0.1;
+                
+                setTimeout(() => {
+                    scene.remove(coin);
+                    const index = ethCoins.indexOf(coin);
+                    if (index > -1) ethCoins.splice(index, 1);
+                    
+                    showMessage(`✨ ¡Moneda recolectada! +${reward} ETH (+5 XP)`, 1500);
+                    updateUI();
+                    checkLevelUp();
+                    checkAchievements();
+                    spawnNewCoin();
+                }, 500);
+            };
+            
+            collectAnimation();
+        }
+        
+        function createCollectionEffect(position) {
+            // Efecto de partículas al recolectar
+            for (let i = 0; i < 10; i++) {
+                const particle = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.05, 6, 6),
+                    new THREE.MeshBasicMaterial({ 
+                        color: new THREE.Color().setHSL(0.6, 1, 0.5),
+                        transparent: true,
+                        opacity: 0.8
+                    })
+                );
+                
+                particle.position.copy(position);
+                particle.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.3,
+                    Math.random() * 0.5,
+                    (Math.random() - 0.5) * 0.3
+                );
+                
+                scene.add(particle);
+                
+                // Animar y remover partícula
+                const animateParticle = () => {
+                    particle.position.add(particle.velocity);
+                    particle.velocity.y -= 0.02; // Gravedad
+                    particle.material.opacity -= 0.02;
+                    
+                    if (particle.material.opacity > 0) {
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        scene.remove(particle);
+                    }
+                };
+                
+                setTimeout(() => animateParticle(), i * 50);
+            }
+        }
+        
+        // Funciones de juego mejoradas
+        function collectETH() {
+            const reward = 2;
+            ethCount += reward;
+            experience += 10;
+            updateUI();
+            checkLevelUp();
+            showMessage(`🪙 ¡Recolectaste ${reward} ETH! ¡ETH es como combustible para la red Ethereum! (+10 XP)`, 2000);
+            
+            animateNetwork();
+            spawnNewCoin();
+            checkAchievements();
+        }
+        
+        // Mini-juego de Clicks Rápidos - VERDADERA MECÁNICA DE JUEGO
+        function startClickingGame() {
+            currentMinigame = 'clicking';
+            minigameActive = true;
+            document.getElementById('clickingGame').style.display = 'block';
+            
+            gameTimer = 30;
+            let gameScore = 0;
+            let ethEarned = 0;
+            clickTargets = [];
+            
+            // Actualizar displays
+            document.getElementById('gameTimeLeft').textContent = gameTimer;
+            document.getElementById('gameScore').textContent = gameScore;
+            document.getElementById('ethEarned').textContent = ethEarned;
+            
+            const gameArea = document.getElementById('clickGameArea');
+            gameArea.innerHTML = '';
+            
+            showMessage('🎯 ¡Haz clic rápidamente en las monedas que aparecen!', 2000);
+            
+            // Timer del juego
+            const gameInterval = setInterval(() => {
+                gameTimer--;
+                document.getElementById('gameTimeLeft').textContent = gameTimer;
+                
+                if (gameTimer <= 0) {
+                    clearInterval(gameInterval);
+                    clearInterval(targetInterval);
+                    finishClickingGame(gameScore, ethEarned);
+                }
+            }, 1000);
+            
+            // Generar objetivos clicables
+            const targetInterval = setInterval(() => {
+                if (gameTimer <= 0) return;
+                
+                createClickTarget(gameArea, () => {
+                    gameScore += 10;
+                    ethEarned++;
+                    document.getElementById('gameScore').textContent = gameScore;
+                    document.getElementById('ethEarned').textContent = ethEarned;
+                });
+            }, 800);
+        }
+        
+        function createClickTarget(container, onClickCallback) {
+            const target = document.createElement('div');
+            target.style.position = 'absolute';
+            target.style.width = '40px';
+            target.style.height = '40px';
+            target.style.backgroundColor = '#667eea';
+            target.style.borderRadius = '50%';
+            target.style.cursor = 'pointer';
+            target.style.display = 'flex';
+            target.style.alignItems = 'center';
+            target.style.justifyContent = 'center';
+            target.style.fontSize = '20px';
+            target.style.border = '2px solid #ffd700';
+            target.textContent = '🪙';
+            target.style.animation = 'pulse 0.5s infinite alternate';
+            
+            // Posición aleatoria
+            target.style.left = Math.random() * (container.offsetWidth - 40) + 'px';
+            target.style.top = Math.random() * (container.offsetHeight - 40) + 'px';
+            
+            let clicked = false;
+            target.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!clicked) {
+                    clicked = true;
+                    onClickCallback();
+                    target.style.backgroundColor = '#2ecc71';
+                    target.textContent = '✓';
+                    setTimeout(() => {
+                        if (target.parentNode) container.removeChild(target);
+                    }, 200);
+                }
+            });
+            
+            container.appendChild(target);
+            
+            // Auto-remover después de 2 segundos
+            setTimeout(() => {
+                if (!clicked && target.parentNode) {
+                    container.removeChild(target);
+                }
+            }, 2000);
+        }
+        
+        function finishClickingGame(score, ethEarned) {
+            ethCount += ethEarned;
+            experience += score;
+            
+            const message = score >= 100 ? 
+                `🎯 ¡Excelente! Puntuación: ${score}. +${ethEarned} ETH, +${score} XP` :
+                score >= 50 ?
+                `🎯 ¡Bien hecho! Puntuación: ${score}. +${ethEarned} ETH, +${score} XP` :
+                `🎯 ¡Sigue practicando! Puntuación: ${score}. +${ethEarned} ETH, +${score} XP`;
+            
+            showMessage(message, 3000);
+            updateUI();
+            checkLevelUp();
+            endMinigame();
+        }
+        
+        function spawnNewCoin() {
+            if (ethCoins.length < 15) {
+                const newCoin = createETHCoin();
+                newCoin.position.set(
+                    (Math.random() - 0.5) * 40,
+                    3 + Math.random() * 5,
+                    (Math.random() - 0.5) * 40
+                );
+                newCoin.userData = { 
+                    originalY: newCoin.position.y,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    collectable: true
+                };
+                ethCoins.push(newCoin);
+                scene.add(newCoin);
+            }
+        }
+        
+        function tryOpenDoor() {
+            const requiredETH = 3;
+            if (ethCount >= requiredETH) {
+                if (!doorOpen) {
+                    ethCount -= requiredETH;
+                    experience += 25;
+                    doorOpen = true;
+                    openMagicDoor();
+                    showMessage("✨ ¡Contrato inteligente ejecutado! ¡Puerta abierta! El contrato verificó que tienes suficiente ETH. ¡Los contratos inteligentes son reglas que se ejecutan automáticamente! (+25 XP)", 4000);
+                    animateNetwork();
+                    updateUI();
+                    checkLevelUp();
+                    unlockAchievement('door_opener');
+                    
+                    // Desbloquear objeto de inventario
+                    inventory.key = true;
+                    updateInventory();
+                } else {
+                    showMessage("🚪 ¡La puerta del contrato inteligente ya está abierta! Usaste el contrato exitosamente.", 2000);
+                }
+            } else {
+                const needed = requiredETH - ethCount;
+                showMessage(`❌ El contrato inteligente requiere ${requiredETH} ETH. ¡Necesitas ${needed} ETH más para ejecutar este contrato!`, 4000);
+            }
+        }
+        
+        function buyHat() {
+            const price = 2;
+            if (ethCount >= price) {
+                if (!inventory.hat) {
+                    ethCount -= price;
+                    experience += 15;
+                    inventory.hat = true;
+                    addHatToAvatar();
+                    showMessage("🎩 ¡Sombrero mágico comprado! Este objeto tipo NFT ahora está en tu inventario. ¡ETH puede usarse para muchas cosas en Ethereum! (+15 XP)", 3000);
+                    animateNetwork();
+                    updateUI();
+                    updateInventory();
+                    checkLevelUp();
+                    unlockAchievement('fashionable');
+                } else {
+                    showMessage("🎩 ¡Ya tienes este sombrero mágico NFT!", 2000);
+                }
+            } else {
+                const needed = price - ethCount;
+                showMessage(`❌ ¡Necesitas ${needed} ETH más para el sombrero mágico!`, 3000);
+            }
+        }
+        
+        function addHatToAvatar() {
+            const hatGeometry = new THREE.ConeGeometry(0.6, 1.2, 8);
+            const hatMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x8e44ad,
+                emissive: 0x2d1b69,
+                emissiveIntensity: 0.3
+            });
+            const hat = new THREE.Mesh(hatGeometry, hatMaterial);
+            hat.position.y = 3.5;
+            hat.castShadow = true;
+            avatar.add(hat);
+            
+            // Add sparkles around the hat
+            for (let i = 0; i < 5; i++) {
+                const sparkle = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.05, 6, 6),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0xffd700,
+                        transparent: true,
+                        opacity: 0.8
+                    })
+                );
+                sparkle.position.set(
+                    (Math.random() - 0.5) * 2,
+                    3.2 + Math.random() * 1,
+                    (Math.random() - 0.5) * 2
+                );
+                sparkle.userData = { 
+                    originalPos: sparkle.position.clone(),
+                    sparkleSpeed: 0.03 + Math.random() * 0.02
+                };
+                avatar.add(sparkle);
+            }
+        }
+        
+        // Puzzle Challenge - MECÁNICA DE JUEGO REAL
+        function startPuzzleChallenge() {
+            currentMinigame = 'puzzle';
+            minigameActive = true;
+            document.getElementById('puzzleChallenge').style.display = 'block';
+            
+            createPuzzleGrid();
+            showMessage('🧩 ¡Resuelve el puzzle de memoria blockchain!', 2000);
+        }
+        
+        function createPuzzleGrid() {
+            const grid = document.getElementById('puzzleGrid');
+            grid.innerHTML = '';
+            
+            const symbols = ['🔗', '⛓️', '🪙', '💎', '🔑', '📜', '🎩', '✨'];
+            let pairs = [...symbols, ...symbols];
+            pairs = shuffleArray(pairs);
+            
+            let flippedCards = [];
+            let matchedPairs = 0;
+            let moves = 0;
+            let startTime = Date.now();
+            
+            document.getElementById('puzzleMoves').textContent = moves;
+            document.getElementById('puzzleTime').textContent = '0';
+            
+            pairs.forEach((symbol, index) => {
+                const card = document.createElement('div');
+                card.style.width = '60px';
+                card.style.height = '60px';
+                card.style.backgroundColor = '#667eea';
+                card.style.border = '2px solid #fff';
+                card.style.borderRadius = '10px';
+                card.style.display = 'flex';
+                card.style.alignItems = 'center';
+                card.style.justifyContent = 'center';
+                card.style.fontSize = '24px';
+                card.style.cursor = 'pointer';
+                card.style.transition = 'all 0.3s ease';
+                card.textContent = '?';
+                card.dataset.symbol = symbol;
+                card.dataset.index = index;
+                
+                card.addEventListener('click', () => {
+                    if (flippedCards.length >= 2 || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+                    
+                    // Voltear carta
+                    card.textContent = symbol;
+                    card.style.backgroundColor = '#2ecc71';
+                    card.classList.add('flipped');
+                    flippedCards.push(card);
+                    
+                    if (flippedCards.length === 2) {
+                        moves++;
+                        document.getElementById('puzzleMoves').textContent = moves;
+                        
+                        setTimeout(() => {
+                            if (flippedCards[0].dataset.symbol === flippedCards[1].dataset.symbol) {
+                                // Match encontrado
+                                flippedCards.forEach(c => {
+                                    c.classList.add('matched');
+                                    c.style.backgroundColor = '#ffd700';
+                                });
+                                matchedPairs++;
+                                
+                                if (matchedPairs === symbols.length) {
+                                    finishPuzzle(moves, Date.now() - startTime);
+                                }
+                            } else {
+                                // No match
+                                flippedCards.forEach(c => {
+                                    c.textContent = '?';
+                                    c.style.backgroundColor = '#667eea';
+                                    c.classList.remove('flipped');
+                                });
+                            }
+                            flippedCards = [];
+                        }, 1000);
+                    }
+                });
+                
+                grid.appendChild(card);
+            });
+            
+            // Timer
+            const timer = setInterval(() => {
+                if (currentMinigame !== 'puzzle') {
+                    clearInterval(timer);
+                    return;
+                }
+                document.getElementById('puzzleTime').textContent = Math.floor((Date.now() - startTime) / 1000);
+            }, 1000);
+        }
+        
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+        
+        function finishPuzzle(moves, timeMs) {
+            const timeSeconds = Math.floor(timeMs / 1000);
+            const bonus = Math.max(0, 100 - moves * 2 - timeSeconds);
+            
+            ethCount += 3;
+            experience += 50 + bonus;
+            
+            showMessage(`🧩 ¡Puzzle completado! ${moves} movimientos en ${timeSeconds}s. +3 ETH, +${50 + bonus} XP`, 4000);
+            updateUI();
+            checkLevelUp();
+            
+            setTimeout(() => endMinigame(), 2000);
+        }
+        
+        function resetPuzzle() {
+            document.getElementById('puzzleMoves').textContent = '0';
+            document.getElementById('puzzleTime').textContent = '0';
+            createPuzzleGrid();
+        }
+        
+        // Modo Exploración - MECÁNICA DE AVENTURA REAL
+        function startExplorationMode() {
+            currentMinigame = 'exploration';
+            document.getElementById('explorationPanel').style.display = 'block';
+            document.getElementById('objectsFound').textContent = '0';
+            
+            // Crear objetos ocultos
+            createHiddenObjects();
+            showMessage('🔍 ¡Modo exploración activado! Camina con WASD y haz clic en objetos brillantes para encontrar tesoros.', 3000);
+        }
+        
+        function createHiddenObjects() {
+            hiddenObjects = [];
+            
+            for (let i = 0; i < 5; i++) {
+                const hiddenObj = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.3, 8, 8),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0xffd700,
+                        transparent: true,
+                        opacity: 0.7,
+                        emissive: 0xffd700,
+                        emissiveIntensity: 0.5
+                    })
+                );
+                
+                hiddenObj.position.set(
+                    (Math.random() - 0.5) * 40,
+                    0.5 + Math.random() * 2,
+                    (Math.random() - 0.5) * 40
+                );
+                
+                hiddenObj.userData = { 
+                    isHidden: true,
+                    found: false,
+                    originalY: hiddenObj.position.y,
+                    floatOffset: Math.random() * Math.PI * 2
+                };
+                
+                hiddenObjects.push(hiddenObj);
+                scene.add(hiddenObj);
+            }
+        }
+        
+        function findHiddenObject(obj) {
+            if (!obj.userData.found) {
+                obj.userData.found = true;
+                obj.material.color.setHex(0x2ecc71);
+                obj.material.emissive.setHex(0x2ecc71);
+                
+                const foundCount = hiddenObjects.filter(o => o.userData.found).length;
+                document.getElementById('objectsFound').textContent = foundCount;
+                
+                experience += 20;
+                ethCount += 1;
+                updateUI();
+                
+                // Efecto de recolección
+                createCollectionEffect(obj.position);
+                
+                showMessage(`✨ ¡Objeto encontrado! ${foundCount}/5 (+1 ETH, +20 XP)`, 2000);
+                
+                if (foundCount >= 5) {
+                    setTimeout(() => {
+                        showMessage('🎉 ¡Exploración completada! Bonificación: +5 ETH, +100 XP', 3000);
+                        ethCount += 5;
+                        experience += 100;
+                        updateUI();
+                        checkLevelUp();
+                        endExploration();
+                    }, 1000);
+                }
+            }
+        }
+        
+        function endExploration() {
+            currentMinigame = null;
+            document.getElementById('explorationPanel').style.display = 'none';
+            
+            // Remover objetos ocultos
+            hiddenObjects.forEach(obj => scene.remove(obj));
+            hiddenObjects = [];
+        }
+        
+        function endMinigame() {
+            currentMinigame = null;
+            minigameActive = false;
+            document.getElementById('clickingGame').style.display = 'none';
+            document.getElementById('puzzleChallenge').style.display = 'none';
+        }
+        
+        function openMagicDoor() {
+            const leftDoor = magicDoor.children.find(child => child.userData.side === 'left');
+            const rightDoor = magicDoor.children.find(child => child.userData.side === 'right');
+            
+            // Animate doors opening
+            animateDoorOpening(leftDoor, -Math.PI/2);
+            animateDoorOpening(rightDoor, Math.PI/2);
+        }
+        
+        function animateDoorOpening(door, targetRotation) {
+            const startRotation = door.rotation.y;
+            const duration = 2000; // 2 seconds
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+                
+                door.rotation.y = startRotation + (targetRotation - startRotation) * easeProgress;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+        
+        function animateNetwork() {
+            document.getElementById('networkStatus').textContent = 'Procesando Transacción...';
+            
+            // Iluminar nodos de red
+            networkNodes.forEach((node, index) => {
+                setTimeout(() => {
+                    const screen = node.children[1]; // Pantalla es el segundo hijo
+                    screen.material.emissiveIntensity = 0.8;
+                    
+                    // Crear efecto de haz de conexión
+                    createConnectionBeam(node.position);
+                    
+                    // Restablecer después de un momento
+                    setTimeout(() => {
+                        screen.material.emissiveIntensity = 0.3;
+                    }, 1000);
+                }, index * 200);
+            });
+            
+            setTimeout(() => {
+                document.getElementById('networkStatus').textContent = '¡Transacción Confirmada! ⛓️';
+                setTimeout(() => {
+                    document.getElementById('networkStatus').textContent = 'Lista';
+                }, 2000);
+            }, 2000);
+        }
+        
+        function createConnectionBeam(startPos) {
+            const geometry = new THREE.CylinderGeometry(0.02, 0.02, 1);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.8
+            });
+            const beam = new THREE.Mesh(geometry, material);
+            
+            // Position beam between node and center
+            const centerPos = new THREE.Vector3(0, 5, 0);
+            beam.position.copy(startPos).lerp(centerPos, 0.5);
+            beam.lookAt(centerPos);
+            beam.rotateX(Math.PI / 2);
+            beam.scale.y = startPos.distanceTo(centerPos);
+            
+            scene.add(beam);
+            
+            // Animate and remove beam
+            const startTime = Date.now();
+            function animateBeam() {
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / 1000;
+                
+                beam.material.opacity = Math.max(0, 0.8 - progress);
+                beam.scale.x = beam.scale.z = 1 + progress * 2;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateBeam);
+                } else {
+                    scene.remove(beam);
+                }
+            }
+            animateBeam();
+        }
+        
+        // Sistema de Tutorial
+        function openTutorial() {
+            tutorialStep = 0;
+            showTutorialStep();
+            document.getElementById('tutorial').style.display = 'block';
+        }
+        
+        function showTutorialStep() {
+            const step = tutorialSteps[tutorialStep];
+            const tutorialContent = document.getElementById('tutorialContent');
+            
+            tutorialContent.innerHTML = `
+                <div class="tutorial-step">
+                    <h3>${step.title}</h3>
+                    <p>${step.content}</p>
+                </div>
+                <div style="margin-top: 20px;">
+                    Paso ${tutorialStep + 1} de ${tutorialSteps.length}
+                </div>
+            `;
+            
+            executeTutorialAction(step.action);
+        }
+        
+        function executeTutorialAction(action) {
+            document.querySelectorAll('*').forEach(el => el.style.animation = '');
+            
+            switch (action) {
+                case 'highlight-eth':
+                    document.getElementById('ethAmount').style.animation = 'pulse 2s infinite';
+                    break;
+                case 'collect-eth':
+                    document.querySelector('button[onclick="collectETH()"]').style.animation = 'pulse 2s infinite';
+                    break;
+                case 'highlight-door':
+                    document.getElementById('doorButton').style.animation = 'pulse 2s infinite';
+                    break;
+                case 'show-network':
+                    animateNetwork();
+                    break;
+            }
+        }
+        
+        function nextTutorialStep() {
+            document.querySelectorAll('*').forEach(el => el.style.animation = '');
+            
+            tutorialStep++;
+            if (tutorialStep < tutorialSteps.length) {
+                showTutorialStep();
+            } else {
+                closeTutorial();
+                localStorage.setItem('ethereum_game_tutorial_completed', 'true');
+                showMessage("🎓 ¡Tutorial completado! ¡Has ganado 50 XP de bonificación!", 3000);
+                experience += 50;
+                updateUI();
+                checkLevelUp();
+            }
+        }
+        
+        function closeTutorial() {
+            document.getElementById('tutorial').style.display = 'none';
+            document.querySelectorAll('*').forEach(el => el.style.animation = '');
+        }
+        
+        // Sistema de Quiz
+        function startQuiz() {
+            currentQuizIndex = 0;
+            quizScore = 0;
+            showQuestion();
+            document.getElementById('quiz').style.display = 'block';
+        }
+        
+        function showQuestion() {
+            const question = quizQuestions[currentQuizIndex];
+            document.getElementById('quizQuestion').textContent = question.question;
+            document.getElementById('quizResult').style.display = 'none';
+            
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'quiz-option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+        }
+        
+        function selectAnswer(selectedIndex) {
+            const question = quizQuestions[currentQuizIndex];
+            const options = document.querySelectorAll('.quiz-option');
+            
+            options.forEach((option, index) => {
+                if (index === question.correct) {
+                    option.classList.add('correct');
+                } else if (index === selectedIndex && index !== question.correct) {
+                    option.classList.add('incorrect');
+                }
+                option.onclick = null;
+            });
+            
+            if (selectedIndex === question.correct) {
+                quizScore++;
+                experience += 20;
+                showMessage("✅ ¡Correcto! +20 XP", 1500);
+            } else {
+                experience += 5;
+                showMessage("❌ Incorrecto, ¡pero aprendiste algo! +5 XP", 1500);
+            }
+            
+            updateUI();
+            document.getElementById('quizExplanation').textContent = question.explanation;
+            document.getElementById('quizResult').style.display = 'block';
+        }
+        
+        function nextQuestion() {
+            currentQuizIndex++;
+            if (currentQuizIndex < quizQuestions.length) {
+                showQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+        
+        function finishQuiz() {
+            const percentage = (quizScore / quizQuestions.length) * 100;
+            let message = `🧠 ¡Quiz completado! Puntuación: ${quizScore}/${quizQuestions.length} (${percentage.toFixed(0)}%)`;
+            
+            if (percentage >= 75) {
+                message += " ¡Excelente trabajo!";
+                experience += 50;
+                unlockAchievement('quiz_master');
+                inventory.scroll = true;
+                updateInventory();
+            } else if (percentage >= 50) {
+                message += " ¡Buen trabajo!";
+                experience += 30;
+            } else {
+                message += " ¡Sigue aprendiendo!";
+                experience += 15;
+            }
+            
+            showMessage(message, 4000);
+            updateUI();
+            checkLevelUp();
+            closeQuiz();
+        }
+        
+        function closeQuiz() {
+            document.getElementById('quiz').style.display = 'none';
+        }
+        
+        // Sistema de Niveles y Logros
+        function checkLevelUp() {
+            const expRequired = currentLevel * 100;
+            if (experience >= expRequired) {
+                currentLevel++;
+                experience -= expRequired;
+                showMessage(`🎉 ¡SUBISTE DE NIVEL! ¡Ahora eres nivel ${currentLevel}! ¡Nuevas características desbloqueadas!`, 4000);
+                unlockAchievement('level_up');
+                
+                if (currentLevel >= 2) {
+                    document.getElementById('quizButton').disabled = false;
+                }
+            }
+        }
+        
+        function unlockAchievement(achievementId) {
+            const achievement = achievements.find(a => a.id === achievementId);
+            if (achievement && !achievement.unlocked) {
+                achievement.unlocked = true;
+                showMessage(`🏆 ¡Logro Desbloqueado: ${achievement.name}!`, 3000);
+                updateAchievements();
+            }
+        }
+        
+        function checkAchievements() {
+            if (ethCount >= 10) unlockAchievement('rich_player');
+            if (ethCount >= 1) unlockAchievement('first_eth');
+        }
+        
+        // Actualizaciones de UI
+        function updateUI() {
+            document.getElementById('ethAmount').textContent = ethCount;
+            document.getElementById('experience').textContent = experience;
+            document.getElementById('currentLevel').textContent = currentLevel;
+            
+            const expRequired = currentLevel * 100;
+            const progress = (experience / expRequired) * 100;
+            document.getElementById('levelProgress').style.width = `${progress}%`;
+            
+            document.getElementById('doorButton').disabled = ethCount < 3;
+            document.getElementById('hatButton').disabled = ethCount < 2 || inventory.hat;
+        }
+        
+        function updateAchievements() {
+            const achievementsList = document.getElementById('achievementsList');
+            achievementsList.innerHTML = '';
+            
+            achievements.forEach(achievement => {
+                const div = document.createElement('div');
+                div.className = `achievement ${achievement.unlocked ? 'unlocked' : 'locked'}`;
+                div.innerHTML = `
+                    <span>${achievement.icon}</span>
+                    <div>
+                        <div style="font-weight: bold;">${achievement.name}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">${achievement.description}</div>
+                    </div>
+                `;
+                achievementsList.appendChild(div);
+            });
+        }
+        
+        function updateInventory() {
+            const inventoryItems = document.querySelectorAll('.inventory-item');
+            inventoryItems.forEach(item => {
+                const itemType = item.dataset.item;
+                if (inventory[itemType]) {
+                    item.classList.add('owned');
+                } else {
+                    item.classList.remove('owned');
+                }
+            });
+        }
+        
+        function updateBlockchainInfo() {
+            const gasPrice = 15 + Math.floor(Math.random() * 20);
+            const blockNumber = 18500000 + Math.floor(Math.random() * 1000);
+            
+            document.getElementById('gasPrice').textContent = `${gasPrice} Gwei`;
+            document.getElementById('blockNumber').textContent = blockNumber.toLocaleString();
+        }
+        
+        function updateETHDisplay() {
+            document.getElementById('ethAmount').textContent = ethCount;
+        }
+        
+        function showMessage(text, duration = 3000) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.style.display = 'block';
+            messageDiv.style.animation = 'slideInDown 0.5s ease';
+            
+            setTimeout(() => {
+                messageDiv.style.animation = 'slideOutUp 0.5s ease';
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                    messageDiv.style.animation = '';
+                }, 500);
+            }, duration);
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            // Control del avatar con WASD - MECÁNICA REAL DE JUEGO
+            updateAvatarMovement();
+            
+            // Animar objetos ocultos durante exploración
+            if (currentMinigame === 'exploration') {
+                hiddenObjects.forEach(obj => {
+                    if (!obj.userData.found) {
+                        obj.position.y = obj.userData.originalY + Math.sin(time * 3 + obj.userData.floatOffset) * 0.3;
+                        obj.rotation.y += 0.02;
+                        obj.material.emissiveIntensity = 0.5 + Math.sin(time * 4) * 0.3;
+                    }
+                });
+            }
+            
+            // Animate floating ETH coins
+            ethCoins.forEach((coin, index) => {
+                if (coin.parent) { // Check if coin is still in scene
+                    coin.rotation.y += 0.02;
+                    coin.position.y = coin.userData.originalY + Math.sin(time * 2 + coin.userData.floatOffset) * 0.5;
+                    
+                    // Add sparkle effect
+                    const glow = coin.children[2]; // Glow is the third child
+                    if (glow) {
+                        glow.material.opacity = 0.1 + Math.sin(time * 3 + index) * 0.05;
+                    }
+                }
+            });
+            
+            // Animate magic door particles
+            if (magicDoor) {
+                magicDoor.children.forEach(child => {
+                    if (child.userData.floatSpeed) {
+                        child.position.y += Math.sin(time * child.userData.floatSpeed) * 0.01;
+                        child.rotation.y += 0.01;
+                    }
+                });
+            }
+            
+            // Animate avatar sparkles (if they exist)
+            if (avatar && hasHat) {
+                avatar.children.forEach(child => {
+                    if (child.userData.sparkleSpeed) {
+                        child.position.y += Math.sin(time * child.userData.sparkleSpeed) * 0.005;
+                        child.material.opacity = 0.5 + Math.sin(time * 4) * 0.3;
+                    }
+                });
+            }
+            
+            // Gentle camera movement
+            if (!isMouseDown) {
+                camera.position.x += Math.sin(time * 0.1) * 0.01;
+                camera.position.z += Math.cos(time * 0.1) * 0.01;
+                camera.lookAt(0, 2, 0);
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Start the game
+        init();
+    </script>
+
+<script>
+  // Sistema de comunicación con parent frame
+  function sendMessageToParent(type, payload) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type, payload }, '*');
+        console.log('📤 [Game] Mensaje enviado al parent:', type, payload);
+      }
+    } catch (error) {
+      console.error('❌ [Game] Error enviando mensaje al parent:', error);
+    }
+  }
+  
+  // Notificar que el juego está listo
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      sendMessageToParent('GAME_READY', { 
+        timestamp: Date.now(),
+        title: 'Aventura Ethereum',
+        gameType: 'threejs'
+      });
+    }, 1000);
+  });
+  
+  // Escuchar mensajes del parent
+  window.addEventListener('message', function(event) {
+    if (event.data.type === 'PARENT_READY') {
+      console.log('✅ [Game] Parent frame está listo');
+    }
+  });
+  
+  // Sistema de eventos de juego personalizable
+  let gameStarted = false;
+  let gameScore = 0;
+  let gameStartTime = Date.now();
+  
+  function startGame() {
+    if (!gameStarted) {
+      gameStarted = true;
+      gameStartTime = Date.now();
+      sendMessageToParent('GAME_STARTED', { timestamp: gameStartTime });
+    }
+  }
+  
+  function updateScore(score) {
+    gameScore = score;
+    sendMessageToParent('SCORE_UPDATE', { score: gameScore });
+  }
+  
+  function completeGame(finalScore = null) {
+    const timeSpent = Math.floor((Date.now() - gameStartTime) / 1000);
+    sendMessageToParent('GAME_COMPLETED', { 
+      score: finalScore || gameScore,
+      timeSpent: timeSpent,
+      completed: true,
+      progress: 100
+    });
+  }
+  
+  // Auto-detección de eventos comunes
+  document.addEventListener('click', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  document.addEventListener('keydown', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  // Prevenir context menu y selección
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+  
+  // Exponer funciones globalmente para uso en juegos
+  window.gameAPI = {
+    start: startGame,
+    updateScore: updateScore,
+    complete: completeGame,
+    sendMessage: sendMessageToParent
+  };
+  
+  console.log('🎮 [Game] Sistema de comunicación inicializado');
+</script>\n</body>
+</html>

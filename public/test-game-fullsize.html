@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Juego Ocupa Toda la Pantalla</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-iframe {
+            width: 100%;
+            height: 600px;
+            border: 3px solid #4CAF50;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        
+        button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test: Juego Ocupa Toda la Pantalla</h1>
+        
+        <div class="info status">
+            <strong>📋 Problema Reportado:</strong><br>
+            El juego en pantalla completa no aprovecha todo el espacio disponible, 
+            se ve recortado con espacios negros y no se puede jugar bien.
+        </div>
+        
+        <div class="success status">
+            <strong>✅ Solución Implementada:</strong><br>
+            Estilos CSS forzados, redimensionado dinámico y ocupación completa del iframe.
+        </div>
+        
+        <h3>🎮 Juego de Prueba - Quiz de IA</h3>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="loadTestGame()">🎯 Cargar Juego de Prueba</button>
+            <button onclick="testFullscreen()">📺 Probar Pantalla Completa</button>
+            <button onclick="inspectStyles()">🔍 Inspeccionar Estilos</button>
+            <button onclick="clearTest()">🗑️ Limpiar Test</button>
+        </div>
+        
+        <iframe id="testIframe" class="test-iframe" style="display:none;"></iframe>
+        
+        <div id="testResults">
+            <!-- Los resultados aparecerán aquí -->
+        </div>
+        
+        <h3>🔧 Mejoras Implementadas:</h3>
+        
+        <div class="success status">
+            <strong>✅ Estilos CSS Forzados:</strong>
+            <div class="code-block">
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.game-container, .quiz-container, .quiz {
+  width: 100% !important;
+  height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+            </div>
+        </div>
+        
+        <div class="success status">
+            <strong>✅ Script de Redimensionado Dinámico:</strong>
+            <div class="code-block">
+function forceFullSize() {
+  // Forzar tamaños en html y body
+  html.style.cssText = 'width:100%!important;height:100%!important;...';
+  body.style.cssText = 'width:100%!important;height:100%!important;...';
+  
+  // Aplicar a contenedores del juego
+  containers.forEach(container => {
+    container.style.cssText += 'width:100%!important;height:100vh!important;...';
+  });
+}
+            </div>
+        </div>
+        
+        <div class="success status">
+            <strong>✅ Iframe Optimizado:</strong>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>✅ <code>width: 100%, height: 100%</code> forzados</li>
+                <li>✅ <code>minWidth: 100%, minHeight: 100%</code> aplicados</li>
+                <li>✅ <code>background: transparent</code> para evitar espacios negros</li>
+                <li>✅ Detección automática de contenedores del juego</li>
+                <li>✅ Re-aplicación automática en <code>resize</code></li>
+            </ul>
+        </div>
+        
+        <div class="warning status">
+            <strong>⚠️ Características del Fix:</strong>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>Estilos aplicados con <code>!important</code> para forzar precedencia</li>
+                <li>Detección inteligente de contenedores de juego</li>
+                <li>Aplicación múltiple: inmediata, en <code>load</code>, y retraso de 1s</li>
+                <li>Textos más grandes en pantalla completa para mejor legibilidad</li>
+                <li>API <code>window.gameAPI.forceFullSize()</code> para re-aplicar manualmente</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function addResult(type, title, message) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `status ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(resultDiv);
+        }
+        
+        function clearTest() {
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('testIframe').style.display = 'none';
+        }
+        
+        function loadTestGame() {
+            clearTest();
+            
+            const testGameHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz: Introducción a AI</title>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2>Quiz: ¿Qué es la práctica de introducción a AI?</h2>
+        
+        <div class="question">
+            <p><strong>Pregunta 1:</strong> ¿Cuál es el objetivo principal de la inteligencia artificial?</p>
+        </div>
+        
+        <div class="options">
+            <div class="option" style="background: #f0f0f0; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer;">
+                A) Solo se usa en investigación académica
+            </div>
+            <div class="option" style="background: #ffcccb; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer;">
+                B) Solo para estudiantes
+            </div>
+            <div class="option" style="background: #c8e6c9; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer;">
+                C) Para automatizar tareas complejas
+            </div>
+            <div class="option" style="background: #ffecb3; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer;">
+                D) Solo para empresas grandes
+            </div>
+        </div>
+        
+        <div class="progress-bar" style="background: #e0e0e0; height: 10px; border-radius: 5px; margin: 20px 0;">
+            <div style="background: #4CAF50; height: 100%; width: 25%; border-radius: 5px;"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+            <div class="score">Puntuación: 0</div>
+            <div class="timer">Tiempo: 00:01</div>
+        </div>
+    </div>
+    
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            background: transparent !important;
+        }
+        body > div:first-child,
+        .quiz-container {
+            width: 100% !important;
+            height: 100vh !important;
+            min-height: 100vh !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+        }
+        .question {
+            font-size: 1.4em !important;
+            margin-bottom: 30px !important;
+        }
+        .options {
+            gap: 15px !important;
+        }
+        .option {
+            padding: 15px 25px !important;
+            font-size: 1.1em !important;
+            min-height: 60px !important;
+        }
+        .progress-bar {
+            height: 8px !important;
+            font-size: 1em !important;
+        }
+        .score, .timer {
+            font-size: 1.3em !important;
+            font-weight: bold !important;
+        }
+    </style>
+    
+    <script>
+        // Función para forzar ocupar toda la pantalla
+        function forceFullSize() {
+            const html = document.documentElement;
+            const body = document.body;
+            
+            // Forzar tamaños en html y body
+            html.style.cssText = 'width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;';
+            body.style.cssText = 'width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important;';
+            
+            // Encontrar el contenedor principal del juego
+            const containers = [
+                document.querySelector('.quiz-container'),
+                body.firstElementChild
+            ].filter(Boolean);
+            
+            containers.forEach(container => {
+                if (container && container.tagName !== 'SCRIPT') {
+                    container.style.cssText += 'width:100%!important;height:100vh!important;min-height:100vh!important;max-width:none!important;margin:0!important;padding:20px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;';
+                }
+            });
+            
+            console.log('[Game] Tamaño forzado aplicado');
+        }
+        
+        // Aplicar después de que el DOM esté listo
+        if (document.readyState === 'complete') {
+            setTimeout(forceFullSize, 100);
+        } else {
+            window.addEventListener('load', () => {
+                setTimeout(forceFullSize, 100);
+                setTimeout(forceFullSize, 1000);
+            });
+        }
+        
+        // Re-aplicar cuando se redimensiona
+        window.addEventListener('resize', forceFullSize);
+        
+        // API global
+        window.gameAPI = {
+            forceFullSize: forceFullSize
+        };
+        
+        // Simular interacciones
+        document.querySelectorAll('.option').forEach((option, index) => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.option').forEach(o => o.style.background = '#f0f0f0');
+                option.style.background = '#4CAF50';
+                option.style.color = 'white';
+                console.log('Opción seleccionada:', index + 1);
+            });
+        });
+    <\/script>
+</body>
+</html>
+            `;
+            
+            const iframe = document.getElementById('testIframe');
+            iframe.srcdoc = testGameHTML;
+            iframe.style.display = 'block';
+            
+            addResult('success', '✅ Juego Cargado', 'Quiz de prueba cargado con estilos de pantalla completa aplicados');
+        }
+        
+        function testFullscreen() {
+            const iframe = document.getElementById('testIframe');
+            
+            if (!iframe.style.display || iframe.style.display === 'none') {
+                addResult('warning', '⚠️ Advertencia', 'Primero carga el juego de prueba');
+                return;
+            }
+            
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen().then(() => {
+                    addResult('success', '✅ Pantalla Completa Activada', 'El iframe está ahora en pantalla completa. Verifica que ocupa toda la pantalla sin espacios negros.');
+                }).catch(error => {
+                    addResult('warning', '⚠️ Error Fullscreen', 'No se pudo activar pantalla completa: ' + error.message);
+                });
+            } else {
+                addResult('warning', '⚠️ No Soportado', 'Tu navegador no soporta la API de pantalla completa en iframes');
+            }
+        }
+        
+        function inspectStyles() {
+            const iframe = document.getElementById('testIframe');
+            
+            if (!iframe.style.display || iframe.style.display === 'none') {
+                addResult('warning', '⚠️ Advertencia', 'Primero carga el juego de prueba');
+                return;
+            }
+            
+            try {
+                setTimeout(() => {
+                    const doc = iframe.contentDocument;
+                    if (doc) {
+                        const html = doc.documentElement;
+                        const body = doc.body;
+                        const container = doc.querySelector('.quiz-container');
+                        
+                        let report = '<strong>Inspección de Estilos:</strong><br>';
+                        report += `HTML: ${html.style.width || 'auto'} x ${html.style.height || 'auto'}<br>`;
+                        report += `BODY: ${body.style.width || 'auto'} x ${body.style.height || 'auto'}<br>`;
+                        if (container) {
+                            report += `CONTAINER: ${container.style.width || 'auto'} x ${container.style.height || 'auto'}<br>`;
+                        }
+                        report += `API disponible: ${!!iframe.contentWindow.gameAPI}<br>`;
+                        
+                        addResult('info', '🔍 Inspección Completada', report);
+                    } else {
+                        addResult('warning', '⚠️ Sin Acceso', 'No se puede acceder al contenido del iframe por restricciones de seguridad');
+                    }
+                }, 1000);
+            } catch (error) {
+                addResult('warning', '⚠️ Error', 'Error inspeccionando: ' + error.message);
+            }
+        }
+        
+        // Listener para salida de fullscreen
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                addResult('info', 'ℹ️ Pantalla Completa Desactivada', 'Has salido del modo pantalla completa');
+            }
+        });
+        
+        // Mensaje inicial
+        addResult('info', '🎯 Test Listo', 'Haz clic en "Cargar Juego de Prueba" para comenzar');
+    </script>
+</body>
+</html>

@@ -134,3 +134,6 @@
     font-family: var(--font-roboto), ui-sans-serif, system-ui, sans-serif;
   }
 }
+
+/* 🎮 Importar estilos para modal de juego gigante */
+@import "../styles/game-modal-fullsize.css";

@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@/hooks/use-auth"
-import { TeacherDashboard } from "@/components/pages/teacher-dashboard"
+import { TeacherDashboard } from "@/components/pages/dashboard-teacher"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
@@ -22,7 +22,6 @@ export default function TeacherDashboardPage() {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
         roles: user.roles
       } : null
     });

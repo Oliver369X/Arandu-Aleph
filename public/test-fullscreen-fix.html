@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Arreglo de Pantalla Completa</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        
+        button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .test-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            background: white;
+            border: 3px solid #4CAF50;
+            border-radius: 15px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .test-modal.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            border: none;
+            transform: none;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        
+        .modal-content {
+            flex: 1;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: calc(100% - 80px);
+        }
+        
+        .close-btn {
+            background: #f44336;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            padding: 0;
+        }
+        
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.8);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test: Arreglo de Pantalla Completa</h1>
+        
+        <div class="info status">
+            <strong>📋 Problema Original:</strong><br>
+            El modal de juego no usaba pantalla completa real del navegador, 
+            solo se hacía más grande pero seguía siendo un modal centrado.
+        </div>
+        
+        <div class="success status">
+            <strong>✅ Solución Implementada:</strong><br>
+            Ahora usa la API de Fullscreen del navegador para verdadera pantalla completa.
+        </div>
+        
+        <h3>🧪 Pruebas de Funcionalidad</h3>
+        
+        <div id="testResults">
+            <!-- Los resultados se mostrarán aquí -->
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testFullscreenAPI()">🔍 Test API Fullscreen</button>
+            <button onclick="showTestModal()">📱 Mostrar Modal de Test</button>
+            <button onclick="testBrowserSupport()">🌐 Test Soporte del Navegador</button>
+            <button onclick="runAllTests()">🚀 Ejecutar Todas las Pruebas</button>
+        </div>
+        
+        <h3>📊 Resultados de las Mejoras</h3>
+        
+        <div class="success status">
+            <strong>✅ Cambios Implementados:</strong>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>✅ Modal usa <code>requestFullscreen()</code> del navegador</li>
+                <li>✅ Estilos ajustados para pantalla completa real</li>
+                <li>✅ Header compacto en modo pantalla completa</li>
+                <li>✅ Contenido del juego ocupa toda la pantalla</li>
+                <li>✅ GameIframe optimizado para fullscreen</li>
+                <li>✅ Controles de teclado mejorados (F11, Escape)</li>
+                <li>✅ Detección automática de cambios de estado</li>
+            </ul>
+        </div>
+        
+        <div class="warning status">
+            <strong>⚠️ Notas Importantes:</strong>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>La API Fullscreen requiere interacción del usuario (no se puede activar automáticamente)</li>
+                <li>Algunos navegadores pueden bloquear fullscreen por políticas de seguridad</li>
+                <li>En modo estudiante, se intenta activar automáticamente después de interacción</li>
+            </ul>
+        </div>
+        
+        <h3>🎮 Para Probar en la Aplicación Real:</h3>
+        <ol style="text-align: left;">
+            <li>Ve al dashboard del profesor</li>
+            <li>Genera un juego nuevo o selecciona uno existente</li>
+            <li>Haz clic en "Jugar Ahora"</li>
+            <li>Verifica que se active pantalla completa real del navegador</li>
+            <li>Como estudiante, debería activarse automáticamente</li>
+        </ol>
+    </div>
+    
+    <!-- Modal de Test -->
+    <div class="fullscreen-overlay" id="overlay"></div>
+    <div class="test-modal" id="testModal">
+        <button class="close-btn" onclick="closeTestModal()">×</button>
+        <div class="modal-header">
+            <h2>🧪 Modal de Prueba</h2>
+            <div style="flex: 1;"></div>
+            <button onclick="toggleTestFullscreen()" id="fullscreenBtn">📱 Activar Fullscreen</button>
+        </div>
+        <div class="modal-content">
+            <h3>🎮 Simulación de Juego</h3>
+            <p id="modalStatus">Modal en modo normal</p>
+            <div style="margin: 20px 0;">
+                <div style="width: 100%; height: 40px; background: #4CAF50; border-radius: 20px; position: relative;">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold;">
+                        Contenido del Juego Simulado
+                    </div>
+                </div>
+            </div>
+            <p><strong>Instrucciones:</strong></p>
+            <p>1. Haz clic en "Activar Fullscreen" para probar</p>
+            <p>2. Presiona F11 o Escape para salir</p>
+            <p>3. Observa cómo cambia el modal</p>
+        </div>
+    </div>
+
+    <script>
+        let isTestModalFullscreen = false;
+        
+        function addResult(type, title, message) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `status ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
+            document.getElementById('testResults').appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+        
+        function testFullscreenAPI() {
+            clearResults();
+            
+            if (document.fullscreenEnabled || document.webkitFullscreenEnabled) {
+                addResult('success', '✅ API Fullscreen Disponible', 'El navegador soporta la API de pantalla completa');
+                
+                if (document.fullscreenElement) {
+                    addResult('info', '📱 Estado Actual', 'Ya estás en modo pantalla completa');
+                } else {
+                    addResult('info', '📱 Estado Actual', 'No estás en modo pantalla completa');
+                }
+                
+            } else {
+                addResult('error', '❌ API No Disponible', 'Este navegador no soporta la API de pantalla completa');
+            }
+        }
+        
+        function testBrowserSupport() {
+            clearResults();
+            
+            const tests = [
+                { name: 'requestFullscreen', available: !!document.documentElement.requestFullscreen },
+                { name: 'webkitRequestFullscreen', available: !!document.documentElement.webkitRequestFullscreen },
+                { name: 'mozRequestFullScreen', available: !!document.documentElement.mozRequestFullScreen },
+                { name: 'msRequestFullscreen', available: !!document.documentElement.msRequestFullscreen },
+                { name: 'exitFullscreen', available: !!document.exitFullscreen },
+                { name: 'fullscreenElement', available: 'fullscreenElement' in document }
+            ];
+            
+            tests.forEach(test => {
+                addResult(
+                    test.available ? 'success' : 'warning',
+                    test.available ? '✅' : '⚠️',
+                    `${test.name}: ${test.available ? 'Disponible' : 'No disponible'}`
+                );
+            });
+        }
+        
+        function showTestModal() {
+            document.getElementById('testModal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('modalStatus').textContent = 'Modal en modo normal';
+        }
+        
+        function closeTestModal() {
+            if (isTestModalFullscreen) {
+                exitTestFullscreen();
+            }
+            document.getElementById('testModal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+        
+        async function toggleTestFullscreen() {
+            if (!isTestModalFullscreen) {
+                await enterTestFullscreen();
+            } else {
+                await exitTestFullscreen();
+            }
+        }
+        
+        async function enterTestFullscreen() {
+            try {
+                const modal = document.getElementById('testModal');
+                
+                // Intentar fullscreen en el modal
+                if (modal.requestFullscreen) {
+                    await modal.requestFullscreen();
+                } else if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+                
+                modal.classList.add('fullscreen');
+                isTestModalFullscreen = true;
+                document.getElementById('fullscreenBtn').textContent = '🔲 Salir Fullscreen';
+                document.getElementById('modalStatus').textContent = '🚀 Modal en PANTALLA COMPLETA REAL';
+                
+                addResult('success', '✅ Fullscreen Activado', 'Modal ahora está en pantalla completa real del navegador');
+                
+            } catch (error) {
+                addResult('error', '❌ Error Fullscreen', 'No se pudo activar pantalla completa: ' + error.message);
+            }
+        }
+        
+        async function exitTestFullscreen() {
+            try {
+                if (document.fullscreenElement) {
+                    await document.exitFullscreen();
+                }
+                
+                const modal = document.getElementById('testModal');
+                modal.classList.remove('fullscreen');
+                isTestModalFullscreen = false;
+                document.getElementById('fullscreenBtn').textContent = '📱 Activar Fullscreen';
+                document.getElementById('modalStatus').textContent = 'Modal en modo normal';
+                
+                addResult('info', 'ℹ️ Fullscreen Desactivado', 'Modal volvió al modo normal');
+                
+            } catch (error) {
+                addResult('error', '❌ Error', 'No se pudo salir de pantalla completa: ' + error.message);
+            }
+        }
+        
+        function runAllTests() {
+            clearResults();
+            addResult('info', '🚀 Ejecutando Tests', 'Iniciando todas las pruebas...');
+            
+            setTimeout(() => {
+                testFullscreenAPI();
+                testBrowserSupport();
+                
+                addResult('success', '✅ Tests Completados', 'Todas las pruebas han sido ejecutadas');
+            }, 500);
+        }
+        
+        // Listener para cambios de fullscreen
+        document.addEventListener('fullscreenchange', () => {
+            const isFullscreen = !!document.fullscreenElement;
+            console.log('Cambio de fullscreen:', isFullscreen);
+            
+            if (!isFullscreen && isTestModalFullscreen) {
+                exitTestFullscreen();
+            }
+        });
+        
+        // Inicialización
+        addResult('info', '🧪 Test Cargado', 'Sistema de pruebas listo. Haz clic en los botones para probar.');
+    </script>
+</body>
+</html>

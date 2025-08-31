@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2025-08-31T11:31:54.308Z",
+  "version": "1.0.0",
+  "games": [
+    {
+      "id": "Ethereum Learning",
+      "title": "Aventura Ethereum",
+      "description": "Aprende sobre blockchain y Ethereum en un mundo 3D interactivo",
+      "gameType": "threejs",
+      "difficulty": "medium",
+      "estimatedTime": 15,
+      "subject": "Blockchain",
+      "subtopic": "Ethereum Básico",
+      "path": "games/Ethereum Learning.html",
+      "processed": true
+    },
+    {
+      "id": "fotosintesis",
+      "title": "Laboratorio de Fotosíntesis",
+      "description": "Experimenta con la fotosíntesis en un laboratorio virtual 3D",
+      "gameType": "threejs",
+      "difficulty": "easy",
+      "estimatedTime": 12,
+      "subject": "Biología",
+      "subtopic": "Fotosíntesis",
+      "path": "games/fotosintesis.html",
+      "processed": true
+    },
+    {
+      "id": "gameAI",
+      "title": "Aventura de Aprendizaje con IA",
+      "description": "Enseña a un robot amigo sobre inteligencia artificial",
+      "gameType": "threejs",
+      "difficulty": "medium",
+      "estimatedTime": 20,
+      "subject": "Inteligencia Artificial",
+      "subtopic": "Conceptos Básicos de IA",
+      "path": "games/gameAI.html",
+      "processed": true
+    },
+    {
+      "id": "gameBlokchin",
+      "title": "Explorador de Blockchain",
+      "description": "Descubre cómo funciona la tecnología blockchain",
+      "gameType": "quiz",
+      "difficulty": "medium",
+      "estimatedTime": 10,
+      "subject": "Blockchain",
+      "subtopic": "Fundamentos de Blockchain",
+      "path": "games/gameBlokchin.html",
+      "processed": true
+    }
+  ]
+}

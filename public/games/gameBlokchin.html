@@ -1,0 +1,1228 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Adventure for Kids</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            color: white;
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            color: white;
+            font-size: 18px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px 20px;
+            border-radius: 15px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        #cameraControls {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .camera-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 80px;
+        }
+        
+        #addBlock {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        #mineBlock {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+            color: white;
+        }
+        
+        #breakBlock {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+        }
+        
+        #resetChain {
+            background: linear-gradient(45deg, #2196F3, #0b7dda);
+            color: white;
+        }
+        
+        #tutorialBtn {
+            background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+            color: white;
+        }
+        
+        .camera-btn {
+            background: linear-gradient(45deg, #607D8B, #455A64);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 20px 30px;
+            border-radius: 20px;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            z-index: 200;
+            display: none;
+            max-width: 400px;
+        }
+        
+        #miningGame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            z-index: 200;
+            display: none;
+            max-width: 500px;
+        }
+        
+        #puzzleArea {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .puzzle-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            border-radius: 15px;
+            margin: 5px;
+        }
+        
+        #tutorial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.98);
+            padding: 30px;
+            border-radius: 20px;
+            color: #333;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            z-index: 300;
+            display: none;
+            max-width: 600px;
+        }
+        
+        #title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        #instructions {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .sparkle {
+            animation: sparkle 1s infinite;
+        }
+    </style>
+</head>
+<body style="margin:0;padding:0;overflow:hidden;">
+    <div id="gameContainer">
+        <div id="ui">
+            <div id="title">🎮 Aventura Blockchain! 🎮</div>
+            <div id="instructions">
+                ¡Arrastra para rotar la cámara! 🖱️<br>
+                ¡Usa la rueda del mouse para zoom! 🔍<br>
+                ¡Haz clic en los bloques para aprender! 📚
+            </div>
+        </div>
+        
+        <div id="score">
+            <div>⭐ Puntos: <span id="points">0</span></div>
+            <div>🏗️ Bloques: <span id="blockCounter">3</span></div>
+        </div>
+        
+        <div id="cameraControls">
+            <button class="camera-btn" id="viewTop">Vista Superior</button>
+            <button class="camera-btn" id="viewSide">Vista Lateral</button>
+            <button class="camera-btn" id="viewFront">Vista Frontal</button>
+            <button class="camera-btn" id="viewFree">Vista Libre</button>
+        </div>
+        
+        <div id="controls">
+            <button id="tutorialBtn">📖 Tutorial</button>
+            <button id="addBlock">➕ Agregar Bloque</button>
+            <button id="mineBlock">⛏️ Minar Bloque</button>
+            <button id="breakBlock">💥 Romper Cadena</button>
+            <button id="resetChain">🔄 Reiniciar</button>
+        </div>
+        
+        <div id="message"></div>
+        
+        <div id="miningGame">
+            <h3>🏗️ ¡Tiempo de Minar!</h3>
+            <p>Resuelve el puzzle para crear un nuevo bloque:</p>
+            <div id="puzzleQuestion"></div>
+            <div id="puzzleArea"></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="miningProgress"></div>
+            </div>
+            <button id="closeMining">❌ Cancelar</button>
+        </div>
+        
+        <div id="tutorial">
+            <h2>🎓 ¡Bienvenido a la Aventura Blockchain!</h2>
+            <div id="tutorialContent">
+                <p><strong>¿Qué es un Blockchain? 🤔</strong></p>
+                <p>¡Es como una cadena de amigos súper seguros! Cada bloque guarda información importante y todos se cuidan entre sí.</p>
+                <br>
+                <p><strong>¿Cómo funciona? ⚡</strong></p>
+                <p>• Cada bloque tiene información especial 📦</p>
+                <p>• Los bloques están conectados con cadenas mágicas ⛓️</p>
+                <p>• Si alguien trata de cambiar un bloque, ¡todos se dan cuenta! 🚨</p>
+                <p>• ¡Esto hace que la información sea súper segura! 🔒</p>
+            </div>
+            <button id="closeTutorial">¡Entendido! 🚀</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let scene, camera, renderer, raycaster, mouse;
+        let blocks = [];
+        let chains = [];
+        let particles = [];
+        let blockCount = 3;
+        let points = 0;
+        let isChainBroken = false;
+        let isMining = false;
+        let currentPuzzle = {};
+        
+        // Camera controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraAngle = { theta: 0, phi: Math.PI / 6 };
+        let cameraDistance = 15;
+        let autoRotate = true;
+        
+        // Colors and materials
+        const HAPPY_COLOR = 0x4CAF50;
+        const SAD_COLOR = 0xf44336;
+        const CHAIN_COLOR = 0xFFD700;
+        const BROKEN_CHAIN_COLOR = 0xFF6B6B;
+        
+        // Sound effects (visual feedback for now)
+        const sounds = {
+            blockCreated: () => showMessage("🎉 ¡Plin! ¡Nuevo bloque creado!", 1500),
+            chainBroken: () => showMessage("💥 ¡Crash! ¡Cadena rota!", 2000),
+            blockClicked: () => console.log("Click sound"),
+            miningComplete: () => showMessage("⛏️ ¡Ding! ¡Minado completado!", 1500)
+        };
+        
+        // Initialize the game
+        function init() {
+            createScene();
+            setupLighting();
+            setupMouseInteraction();
+            setupCameraControls();
+            createEnvironment();
+            createInitialBlocks();
+            setupGameControls();
+            animate();
+        }
+        
+        function createScene() {
+            scene = new THREE.Scene();
+            
+            // Create beautiful sky gradient
+            const skyGradient = new THREE.Color(0x87CEEB);
+            scene.background = skyGradient;
+            scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            updateCameraPosition();
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+        }
+        
+        function setupLighting() {
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            // Main directional light (sun)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.1;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -20;
+            directionalLight.shadow.camera.right = 20;
+            directionalLight.shadow.camera.top = 20;
+            directionalLight.shadow.camera.bottom = -20;
+            scene.add(directionalLight);
+            
+            // Colored accent lights
+            const light1 = new THREE.PointLight(0x00ff88, 0.5, 30);
+            light1.position.set(-10, 5, 10);
+            scene.add(light1);
+            
+            const light2 = new THREE.PointLight(0xff6b88, 0.5, 30);
+            light2.position.set(10, 5, -10);
+            scene.add(light2);
+        }
+        
+        function createEnvironment() {
+            // Ground
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x90EE90,
+                transparent: true,
+                opacity: 0.8
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Add some decorative clouds
+            createClouds();
+            
+            // Create particle system
+            createParticleSystem();
+        }
+        
+        function createClouds() {
+            for (let i = 0; i < 8; i++) {
+                const cloudGeometry = new THREE.SphereGeometry(Math.random() * 2 + 1, 16, 16);
+                const cloudMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                cloud.position.set(
+                    (Math.random() - 0.5) * 80,
+                    Math.random() * 10 + 15,
+                    (Math.random() - 0.5) * 80
+                );
+                cloud.scale.set(
+                    Math.random() * 2 + 1,
+                    Math.random() * 1 + 0.5,
+                    Math.random() * 2 + 1
+                );
+                scene.add(cloud);
+            }
+        }
+        
+        function createParticleSystem() {
+            const particleCount = 100;
+            const particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 50;
+                positions[i * 3 + 1] = Math.random() * 20;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
+                
+                colors[i * 3] = Math.random();
+                colors[i * 3 + 1] = Math.random();
+                colors[i * 3 + 2] = Math.random();
+            }
+            
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                size: 0.1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            const particleSystem = new THREE.Points(particles, particleMaterial);
+            scene.add(particleSystem);
+        }
+        
+        function setupMouseInteraction() {
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            
+            // Mouse events for camera and interaction
+            renderer.domElement.addEventListener('mousedown', onMouseDown);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+            renderer.domElement.addEventListener('mouseup', onMouseUp);
+            renderer.domElement.addEventListener('wheel', onMouseWheel);
+            renderer.domElement.addEventListener('click', onMouseClick);
+        }
+        
+        function onMouseDown(event) {
+            isDragging = true;
+            autoRotate = false;
+            previousMousePosition = { x: event.clientX, y: event.clientY };
+        }
+        
+        function onMouseMove(event) {
+            if (isDragging) {
+                const deltaX = event.clientX - previousMousePosition.x;
+                const deltaY = event.clientY - previousMousePosition.y;
+                
+                cameraAngle.theta -= deltaX * 0.01;
+                cameraAngle.phi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraAngle.phi + deltaY * 0.01));
+                
+                updateCameraPosition();
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            }
+        }
+        
+        function onMouseUp() {
+            isDragging = false;
+        }
+        
+        function onMouseWheel(event) {
+            cameraDistance = Math.max(5, Math.min(30, cameraDistance + event.deltaY * 0.01));
+            updateCameraPosition();
+        }
+        
+        function onMouseClick(event) {
+            if (isDragging) return;
+            
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(blocks.map(block => block.mesh));
+            
+            if (intersects.length > 0) {
+                const clickedBlock = intersects[0].object;
+                const blockData = blocks.find(block => block.mesh === clickedBlock);
+                if (blockData) {
+                    showBlockMessage(blockData);
+                    addPoints(10);
+                    sounds.blockClicked();
+                }
+            }
+        }
+        
+        function updateCameraPosition() {
+            const x = cameraDistance * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
+            const y = cameraDistance * Math.cos(cameraAngle.phi);
+            const z = cameraDistance * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
+            
+            camera.position.set(x, y, z);
+            camera.lookAt(0, 0, 0);
+        }
+        
+        function setupCameraControls() {
+            document.getElementById('viewTop').addEventListener('click', () => {
+                cameraAngle = { theta: 0, phi: 0.1 };
+                cameraDistance = 20;
+                autoRotate = false;
+                updateCameraPosition();
+            });
+            
+            document.getElementById('viewSide').addEventListener('click', () => {
+                cameraAngle = { theta: Math.PI / 2, phi: Math.PI / 2 };
+                cameraDistance = 15;
+                autoRotate = false;
+                updateCameraPosition();
+            });
+            
+            document.getElementById('viewFront').addEventListener('click', () => {
+                cameraAngle = { theta: 0, phi: Math.PI / 2 };
+                cameraDistance = 15;
+                autoRotate = false;
+                updateCameraPosition();
+            });
+            
+            document.getElementById('viewFree').addEventListener('click', () => {
+                autoRotate = true;
+                cameraDistance = 15;
+            });
+        }
+        
+        function createBlock(x, y, z, number, blockType = 'normal') {
+            // Create block geometry with rounded edges
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            
+            // Create canvas for face texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
+            
+            // Background color based on type and state
+            let bgColor = isChainBroken ? '#ff6b6b' : '#4CAF50';
+            if (blockType === 'special') bgColor = '#FF9800';
+            
+            context.fillStyle = bgColor;
+            context.fillRect(0, 0, 256, 256);
+            
+            // Add sparkle effect for special blocks
+            if (blockType === 'special') {
+                context.fillStyle = 'rgba(255,255,255,0.8)';
+                for (let i = 0; i < 20; i++) {
+                    const x = Math.random() * 256;
+                    const y = Math.random() * 256;
+                    context.beginPath();
+                    context.arc(x, y, Math.random() * 3 + 1, 0, Math.PI * 2);
+                    context.fill();
+                }
+            }
+            
+            // Draw block info
+            context.fillStyle = 'white';
+            context.font = 'bold 32px Arial';
+            context.textAlign = 'center';
+            context.fillText(`Bloque ${number}`, 128, 50);
+            
+            // Draw block type
+            context.font = '20px Arial';
+            const typeText = blockType === 'special' ? '⭐ Especial' : '🔹 Normal';
+            context.fillText(typeText, 128, 80);
+            
+            // Draw happy/sad face
+            context.fillStyle = 'black';
+            context.beginPath();
+            context.arc(90, 140, 15, 0, Math.PI * 2);
+            context.fill();
+            context.beginPath();
+            context.arc(166, 140, 15, 0, Math.PI * 2);
+            context.fill();
+            
+            // Draw mouth
+            context.strokeStyle = 'black';
+            context.lineWidth = 8;
+            context.beginPath();
+            if (isChainBroken) {
+                context.arc(128, 200, 40, 0.2 * Math.PI, 0.8 * Math.PI);
+            } else {
+                context.arc(128, 180, 40, 0.2 * Math.PI, 0.8 * Math.PI, true);
+            }
+            context.stroke();
+            
+            // Create texture and materials
+            const texture = new THREE.CanvasTexture(canvas);
+            const materials = [];
+            for (let i = 0; i < 6; i++) {
+                materials.push(new THREE.MeshLambertMaterial({ map: texture }));
+            }
+            
+            // Create mesh
+            const mesh = new THREE.Mesh(geometry, materials);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            
+            // Store block data
+            const blockData = {
+                mesh: mesh,
+                number: number,
+                position: { x, y, z },
+                type: blockType,
+                data: generateBlockData(blockType)
+            };
+            blocks.push(blockData);
+            
+            // Animate appearance
+            mesh.scale.set(0, 0, 0);
+            animateScale(mesh, { x: 1, y: 1, z: 1 }, 800);
+            
+            // Create sparkle effect for special blocks
+            if (blockType === 'special') {
+                createSparkleEffect(mesh);
+            }
+            
+            return blockData;
+        }
+        
+        function generateBlockData(type) {
+            const normalData = [
+                "📝 Información de usuario",
+                "💰 Transacción segura",
+                "🔐 Datos encriptados",
+                "📊 Registro importante",
+                "🏦 Información bancaria"
+            ];
+            
+            const specialData = [
+                "🎮 ¡Logro desbloqueado!",
+                "⭐ Bloque de recompensa",
+                "🏆 Certificado especial",
+                "💎 Tesoro digital",
+                "🚀 Datos súper importantes"
+            ];
+            
+            const dataPool = type === 'special' ? specialData : normalData;
+            return dataPool[Math.floor(Math.random() * dataPool.length)];
+        }
+        
+        function createSparkleEffect(mesh) {
+            const sparkles = [];
+            for (let i = 0; i < 10; i++) {
+                const sparkleGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+                const sparkleMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffff00,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const sparkle = new THREE.Mesh(sparkleGeometry, sparkleMaterial);
+                sparkle.position.copy(mesh.position);
+                sparkle.position.add(new THREE.Vector3(
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 4
+                ));
+                scene.add(sparkle);
+                sparkles.push(sparkle);
+                
+                // Animate sparkles
+                const startTime = Date.now();
+                function animateSparkle() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = (elapsed % 2000) / 2000;
+                    
+                    sparkle.material.opacity = 0.8 * (1 - progress);
+                    sparkle.scale.setScalar(1 + progress);
+                    
+                    if (elapsed < 5000) {
+                        requestAnimationFrame(animateSparkle);
+                    } else {
+                        scene.remove(sparkle);
+                    }
+                }
+                animateSparkle();
+            }
+        }
+        
+        function createChain(block1, block2) {
+            const start = block1.position;
+            const end = block2.position;
+            const distance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.z - start.z, 2));
+            
+            // Main chain cylinder
+            const geometry = new THREE.CylinderGeometry(0.15, 0.15, distance);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: isChainBroken ? BROKEN_CHAIN_COLOR : CHAIN_COLOR,
+                emissive: isChainBroken ? 0x331111 : 0x332200
+            });
+            
+            const chain = new THREE.Mesh(geometry, material);
+            chain.position.set((start.x + end.x) / 2, start.y, (start.z + end.z) / 2);
+            chain.rotation.z = Math.atan2(end.z - start.z, end.x - start.x) - Math.PI / 2;
+            chain.castShadow = true;
+            scene.add(chain);
+            
+            // Add chain links for detail
+            const linkCount = Math.floor(distance / 1);
+            for (let i = 0; i < linkCount; i++) {
+                const progress = i / linkCount;
+                const linkX = start.x + (end.x - start.x) * progress;
+                const linkZ = start.z + (end.z - start.z) * progress;
+                
+                const linkGeometry = new THREE.TorusGeometry(0.3, 0.1, 8, 16);
+                const linkMaterial = new THREE.MeshLambertMaterial({ 
+                    color: isChainBroken ? BROKEN_CHAIN_COLOR : CHAIN_COLOR
+                });
+                const link = new THREE.Mesh(linkGeometry, linkMaterial);
+                link.position.set(linkX, start.y, linkZ);
+                link.rotation.y = Math.atan2(end.z - start.z, end.x - start.x);
+                scene.add(link);
+                chains.push(link);
+            }
+            
+            chains.push(chain);
+            return chain;
+        }
+        
+        function createInitialBlocks() {
+            createBlock(-6, 0, 0, 1);
+            createBlock(-2, 0, 0, 2);
+            createBlock(2, 0, 0, 3);
+            
+            setTimeout(() => {
+                createChain(blocks[0], blocks[1]);
+                createChain(blocks[1], blocks[2]);
+                showMessage("🎉 ¡Bienvenido! Tu blockchain inicial está listo. ¡Explora y aprende!", 3000);
+            }, 1000);
+        }
+        
+        function startMiningGame() {
+            if (isMining) return;
+            
+            isMining = true;
+            const puzzles = [
+                { question: "¿Cuánto es 2 + 3?", answer: "5", options: ["4", "5", "6", "7"] },
+                { question: "¿Qué forma tiene un bloque?", answer: "Cubo", options: ["Círculo", "Cubo", "Triángulo", "Estrella"] },
+                { question: "¿De qué color es una cadena segura?", answer: "Dorado", options: ["Rojo", "Dorado", "Negro", "Gris"] },
+                { question: "¿Cuántos ojos tiene cada bloque?", answer: "2", options: ["1", "2", "3", "4"] }
+            ];
+            
+            currentPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+            
+            document.getElementById('puzzleQuestion').textContent = currentPuzzle.question;
+            const puzzleArea = document.getElementById('puzzleArea');
+            puzzleArea.innerHTML = '';
+            
+            currentPuzzle.options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.textContent = option;
+                btn.className = 'puzzle-btn';
+                btn.style.background = 'linear-gradient(45deg, #2196F3, #0b7dda)';
+                btn.style.color = 'white';
+                btn.onclick = () => checkPuzzleAnswer(option);
+                puzzleArea.appendChild(btn);
+            });
+            
+            document.getElementById('miningGame').style.display = 'block';
+        }
+        
+        function checkPuzzleAnswer(selectedAnswer) {
+            const progressBar = document.getElementById('miningProgress');
+            
+            if (selectedAnswer === currentPuzzle.answer) {
+                // Correct answer - start mining animation
+                showMessage("🎉 ¡Correcto! Minando bloque...", 1500);
+                
+                let progress = 0;
+                const miningInterval = setInterval(() => {
+                    progress += 10;
+                    progressBar.style.width = progress + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(miningInterval);
+                        completeMining();
+                    }
+                }, 200);
+            } else {
+                // Wrong answer
+                showMessage("❌ ¡Inténtalo de nuevo!", 1500);
+                const buttons = document.querySelectorAll('.puzzle-btn');
+                buttons.forEach(btn => {
+                    if (btn.textContent === selectedAnswer) {
+                        btn.style.background = 'linear-gradient(45deg, #f44336, #da190b)';
+                        setTimeout(() => {
+                            btn.style.background = 'linear-gradient(45deg, #2196F3, #0b7dda)';
+                        }, 1000);
+                    }
+                });
+            }
+        }
+        
+        function completeMining() {
+            const isSpecial = Math.random() < 0.3; // 30% chance for special block
+            addNewBlock(isSpecial ? 'special' : 'normal');
+            
+            document.getElementById('miningGame').style.display = 'none';
+            document.getElementById('miningProgress').style.width = '0%';
+            
+            const bonusPoints = isSpecial ? 100 : 50;
+            addPoints(bonusPoints);
+            
+            if (isSpecial) {
+                sounds.miningComplete();
+                showMessage("⭐ ¡Increíble! ¡Has minado un bloque especial! +" + bonusPoints + " puntos", 3000);
+            } else {
+                sounds.blockCreated();
+                showMessage("⛏️ ¡Excelente trabajo! Nuevo bloque minado. +" + bonusPoints + " puntos", 2500);
+            }
+            
+            isMining = false;
+        }
+        
+        function addNewBlock(type = 'normal') {
+            if (blocks.length === 0) return;
+            
+            blockCount++;
+            const lastBlock = blocks[blocks.length - 1];
+            const newX = lastBlock.position.x + 4;
+            
+            const newBlock = createBlock(newX, 0, 0, blockCount, type);
+            
+            setTimeout(() => {
+                createChain(lastBlock, newBlock);
+                updateUI();
+                if (type !== 'special') {
+                    sounds.blockCreated();
+                }
+            }, 800);
+        }
+        
+        function breakChain() {
+            if (isChainBroken) return;
+            
+            isChainBroken = true;
+            sounds.chainBroken();
+            
+            // Remove all current blocks and chains
+            blocks.forEach(block => scene.remove(block.mesh));
+            chains.forEach(chain => scene.remove(chain));
+            
+            // Store positions and recreate with sad faces
+            const positions = blocks.map(block => ({ 
+                ...block.position, 
+                number: block.number,
+                type: block.type,
+                data: block.data
+            }));
+            blocks = [];
+            chains = [];
+            
+            // Recreate blocks with sad faces
+            positions.forEach((pos, index) => {
+                setTimeout(() => {
+                    createBlock(pos.x, pos.y, pos.z, pos.number, pos.type);
+                    
+                    // Recreate chains
+                    if (index > 0) {
+                        setTimeout(() => {
+                            createChain(blocks[index - 1], blocks[index]);
+                        }, 300);
+                    }
+                }, index * 200);
+            });
+            
+            showMessage("💔 ¡Oh no! ¡La cadena está rota! Todos los bloques detectaron el cambio y están tristes. ¡Esto demuestra lo seguro que es el blockchain!", 4000);
+        }
+        
+        function resetChain() {
+            // Clear everything
+            blocks.forEach(block => scene.remove(block.mesh));
+            chains.forEach(chain => scene.remove(chain));
+            blocks = [];
+            chains = [];
+            blockCount = 3;
+            isChainBroken = false;
+            
+            setTimeout(() => {
+                createInitialBlocks();
+                updateUI();
+                showMessage("✨ ¡Cadena reiniciada! Todos los bloques están felices de nuevo.", 2500);
+            }, 500);
+        }
+        
+        function showBlockMessage(blockData) {
+            const messages = [
+                `¡Hola! Soy el ${blockData.data} 📦\n¡Haz clic en otros bloques para aprender más!`,
+                `Estoy conectado a mis amigos en la cadena! 👥\nTodos nos cuidamos mutuamente.`,
+                `Si alguien trata de cambiarme, ¡mis amigos lo notarán inmediatamente! 🔒\n¡Eso nos hace súper seguros!`,
+                `¡Somos como superhéroes digitales! 🦸‍♀️\nProtegemos la información juntos.`,
+                `Mi número es ${blockData.number} y mi tipo es ${blockData.type}! ⭐\n¡Cada bloque es único y especial!`
+            ];
+            
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            showMessage(randomMessage, 3000);
+            
+            // Special animation for clicked block
+            animateBounce(blockData.mesh);
+            createClickEffect(blockData.mesh.position);
+        }
+        
+        function createClickEffect(position) {
+            // Create expanding ring effect
+            const ringGeometry = new THREE.RingGeometry(0.5, 1, 16);
+            const ringMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff88,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.position.copy(position);
+            ring.position.y += 0.1;
+            ring.rotation.x = -Math.PI / 2;
+            scene.add(ring);
+            
+            // Animate ring expansion and fade
+            const startTime = Date.now();
+            function animateRing() {
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / 1000;
+                
+                if (progress < 1) {
+                    ring.scale.setScalar(1 + progress * 2);
+                    ring.material.opacity = 0.7 * (1 - progress);
+                    requestAnimationFrame(animateRing);
+                } else {
+                    scene.remove(ring);
+                }
+            }
+            animateRing();
+        }
+        
+        function showTutorial() {
+            document.getElementById('tutorial').style.display = 'block';
+        }
+        
+        function addPoints(amount) {
+            points += amount;
+            updateUI();
+            
+            // Show points animation
+            const scoreEl = document.getElementById('points');
+            scoreEl.classList.add('sparkle');
+            setTimeout(() => scoreEl.classList.remove('sparkle'), 1000);
+        }
+        
+        function updateUI() {
+            document.getElementById('points').textContent = points;
+            document.getElementById('blockCounter').textContent = blocks.length;
+        }
+        
+        function showMessage(text, duration) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, duration);
+        }
+        
+        function animateScale(mesh, targetScale, duration) {
+            const startScale = { ...mesh.scale };
+            const startTime = Date.now();
+            
+            function update() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeOutBounce(progress);
+                
+                mesh.scale.x = startScale.x + (targetScale.x - startScale.x) * eased;
+                mesh.scale.y = startScale.y + (targetScale.y - startScale.y) * eased;
+                mesh.scale.z = startScale.z + (targetScale.z - startScale.z) * eased;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            update();
+        }
+        
+        function animateBounce(mesh) {
+            const originalY = mesh.position.y;
+            const originalScale = { ...mesh.scale };
+            const startTime = Date.now();
+            const duration = 800;
+            
+            function update() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const bounce = Math.sin(progress * Math.PI * 3) * 0.5 * (1 - progress);
+                const scale = 1 + Math.sin(progress * Math.PI * 2) * 0.1 * (1 - progress);
+                
+                mesh.position.y = originalY + bounce;
+                mesh.scale.setScalar(scale);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    mesh.position.y = originalY;
+                    mesh.scale.copy(originalScale);
+                }
+            }
+            update();
+        }
+        
+        function easeOutBounce(t) {
+            if (t < 1 / 2.75) {
+                return 7.5625 * t * t;
+            } else if (t < 2 / 2.75) {
+                return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+            } else if (t < 2.5 / 2.75) {
+                return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+            } else {
+                return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+            }
+        }
+        
+        function setupGameControls() {
+            document.getElementById('addBlock').addEventListener('click', () => addNewBlock());
+            document.getElementById('mineBlock').addEventListener('click', startMiningGame);
+            document.getElementById('breakBlock').addEventListener('click', breakChain);
+            document.getElementById('resetChain').addEventListener('click', resetChain);
+            document.getElementById('tutorialBtn').addEventListener('click', showTutorial);
+            
+            document.getElementById('closeMining').addEventListener('click', () => {
+                document.getElementById('miningGame').style.display = 'none';
+                document.getElementById('miningProgress').style.width = '0%';
+                isMining = false;
+            });
+            
+            document.getElementById('closeTutorial').addEventListener('click', () => {
+                document.getElementById('tutorial').style.display = 'none';
+                addPoints(25); // Reward for reading tutorial
+                showMessage("🎓 ¡Excelente! Has ganado 25 puntos por leer el tutorial.", 2000);
+            });
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            // Auto-rotate camera if enabled
+            if (autoRotate) {
+                cameraAngle.theta += 0.005;
+                updateCameraPosition();
+            }
+            
+            // Animate blocks with gentle rotation and floating
+            blocks.forEach((block, index) => {
+                if (block.mesh) {
+                    block.mesh.rotation.y = Math.sin(time + index) * 0.1;
+                    block.mesh.position.y = Math.sin(time * 2 + index) * 0.1;
+                }
+            });
+            
+            // Animate chains with glowing effect
+            chains.forEach((chain, index) => {
+                if (chain && chain.material) {
+                    const glow = Math.sin(time * 3 + index) * 0.3 + 0.7;
+                    if (!isChainBroken) {
+                        chain.material.emissive.setRGB(glow * 0.3, glow * 0.3, 0);
+                    }
+                }
+            });
+            
+            // Animate environment particles
+            const particles = scene.children.find(child => child instanceof THREE.Points);
+            if (particles) {
+                particles.rotation.y += 0.001;
+                const positions = particles.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] += Math.sin(time + i) * 0.01;
+                }
+                particles.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Keyboard shortcuts
+        window.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case ' ':
+                    event.preventDefault();
+                    addNewBlock();
+                    break;
+                case 'm':
+                case 'M':
+                    startMiningGame();
+                    break;
+                case 'b':
+                case 'B':
+                    breakChain();
+                    break;
+                case 'r':
+                case 'R':
+                    resetChain();
+                    break;
+                case 't':
+                case 'T':
+                    showTutorial();
+                    break;
+            }
+        });
+        
+        // Start the game
+        init();
+        
+        // Show welcome message
+        setTimeout(() => {
+            showMessage("🎮 ¡Bienvenido a la Aventura Blockchain!\n\nUsa SPACE para agregar bloques rápido\nM para minar, B para romper, R para reiniciar, T para tutorial", 4000);
+        }, 2000);
+    </script>
+
+<script>
+  // Sistema de comunicación con parent frame
+  function sendMessageToParent(type, payload) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type, payload }, '*');
+        console.log('📤 [Game] Mensaje enviado al parent:', type, payload);
+      }
+    } catch (error) {
+      console.error('❌ [Game] Error enviando mensaje al parent:', error);
+    }
+  }
+  
+  // Notificar que el juego está listo
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      sendMessageToParent('GAME_READY', { 
+        timestamp: Date.now(),
+        title: 'Explorador de Blockchain',
+        gameType: 'quiz'
+      });
+    }, 1000);
+  });
+  
+  // Escuchar mensajes del parent
+  window.addEventListener('message', function(event) {
+    if (event.data.type === 'PARENT_READY') {
+      console.log('✅ [Game] Parent frame está listo');
+    }
+  });
+  
+  // Sistema de eventos de juego personalizable
+  let gameStarted = false;
+  let gameScore = 0;
+  let gameStartTime = Date.now();
+  
+  function startGame() {
+    if (!gameStarted) {
+      gameStarted = true;
+      gameStartTime = Date.now();
+      sendMessageToParent('GAME_STARTED', { timestamp: gameStartTime });
+    }
+  }
+  
+  function updateScore(score) {
+    gameScore = score;
+    sendMessageToParent('SCORE_UPDATE', { score: gameScore });
+  }
+  
+  function completeGame(finalScore = null) {
+    const timeSpent = Math.floor((Date.now() - gameStartTime) / 1000);
+    sendMessageToParent('GAME_COMPLETED', { 
+      score: finalScore || gameScore,
+      timeSpent: timeSpent,
+      completed: true,
+      progress: 100
+    });
+  }
+  
+  // Auto-detección de eventos comunes
+  document.addEventListener('click', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  document.addEventListener('keydown', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  // Prevenir context menu y selección
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+  
+  // Exponer funciones globalmente para uso en juegos
+  window.gameAPI = {
+    start: startGame,
+    updateScore: updateScore,
+    complete: completeGame,
+    sendMessage: sendMessageToParent
+  };
+  
+  console.log('🎮 [Game] Sistema de comunicación inicializado');
+</script>\n</body>
+</html>

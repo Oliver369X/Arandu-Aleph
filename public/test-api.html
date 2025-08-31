@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Fix - Arandu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API Fix - Dashboard Docente</h1>
+        <p>Esta página prueba si el arreglo del API para subjects por profesor funciona correctamente.</p>
+        
+        <div class="info result">
+            <strong>Teacher ID:</strong> <code>dfb96a80-56b6-4556-884d-65c53a0072b0</code><br>
+            <strong>Backend URL:</strong> <code>http://localhost:3001/api-v1</code>
+        </div>
+        
+        <button onclick="testDirectAPI()">🔗 Probar Endpoint Directo</button>
+        <button onclick="testAPIService()">🛠️ Probar API Service (Arreglado)</button>
+        <button onclick="clearResults()">🧹 Limpiar</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:3001/api-v1';
+        const TEACHER_ID = 'dfb96a80-56b6-4556-884d-65c53a0072b0';
+        
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // Test del endpoint directo del backend
+        async function testDirectAPI() {
+            addResult('🔄 Probando endpoint directo del backend...', 'info');
+            
+            try {
+                const url = `${BACKEND_URL}/subjects/creator/${TEACHER_ID}`;
+                const response = await fetch(url);
+                
+                addResult(`📡 Request a: ${url}`, 'info');
+                addResult(`📊 Status: ${response.status} ${response.statusText}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('✅ Backend responde correctamente', 'success');
+                    addResult(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+                    
+                    if (data.success && Array.isArray(data.data)) {
+                        addResult(`📚 Subjects encontrados: ${data.data.length}`, 'success');
+                        
+                        if (data.data.length > 0) {
+                            let subjectsList = '<strong>📋 Lista de subjects:</strong><ul>';
+                            data.data.forEach((subject, index) => {
+                                subjectsList += `<li>${subject.name} (${subject.category}) - $${subject.price}</li>`;
+                            });
+                            subjectsList += '</ul>';
+                            addResult(subjectsList, 'success');
+                        } else {
+                            addResult('⚠️ El backend devolvió array vacío', 'error');
+                        }
+                    } else {
+                        addResult('❌ Formato de respuesta inesperado', 'error');
+                    }
+                } else {
+                    addResult(`❌ Error HTTP: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error de conexión: ${error.message}`, 'error');
+                addResult('💡 Asegúrate de que el backend esté corriendo en puerto 3001', 'info');
+            }
+        }
+        
+        // Test del API Service arreglado (simular el arreglo)
+        async function testAPIService() {
+            addResult('🛠️ Simulando API Service con el arreglo...', 'info');
+            
+            try {
+                const url = `${BACKEND_URL}/subjects/creator/${TEACHER_ID}`;
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const backendData = await response.json();
+                    
+                    // Simular el arreglo implementado en api.ts
+                    let apiServiceResult;
+                    if (backendData.success && Array.isArray(backendData.data)) {
+                        apiServiceResult = {
+                            success: true,
+                            data: backendData.data // Extraer el array real
+                        };
+                        addResult('✅ Arreglo del API Service funcionó correctamente', 'success');
+                    } else if (backendData.success === false) {
+                        apiServiceResult = {
+                            success: false,
+                            error: backendData.error || 'Error desconocido del backend'
+                        };
+                        addResult('❌ Backend devolvió error', 'error');
+                    } else {
+                        apiServiceResult = {
+                            success: false,
+                            error: 'Formato inesperado'
+                        };
+                        addResult('❌ Formato inesperado', 'error');
+                    }
+                    
+                    addResult(`<strong>🎯 Resultado del API Service:</strong><pre>${JSON.stringify(apiServiceResult, null, 2)}</pre>`, 'info');
+                    
+                    // Simular lo que recibiría el hook useTeacherDashboard
+                    if (apiServiceResult.success && apiServiceResult.data && Array.isArray(apiServiceResult.data)) {
+                        const courses = apiServiceResult.data;
+                        addResult(`🎉 Dashboard recibiría ${courses.length} cursos`, 'success');
+                        
+                        if (courses.length > 0) {
+                            addResult('<strong>✅ RESULTADO: El dashboard MOSTRARÍA los cursos 🎉</strong>', 'success');
+                            
+                            let coursesList = '<strong>📚 Cursos que aparecerían en el dashboard:</strong><ul>';
+                            courses.forEach((course, index) => {
+                                coursesList += `<li><strong>${course.name}</strong> - ${course.description || 'Sin descripción'} (${course.category})</li>`;
+                            });
+                            coursesList += '</ul>';
+                            addResult(coursesList, 'success');
+                            
+                            addResult('💡 <strong>PRÓXIMO PASO:</strong> Probar en el navegador en <a href="/dashboard/teacher" target="_blank">http://localhost:3000/dashboard/teacher</a>', 'info');
+                        } else {
+                            addResult('❌ RESULTADO: El dashboard mostraría "No hay cursos disponibles"', 'error');
+                        }
+                    } else {
+                        addResult('❌ RESULTADO: El dashboard mostraría un error', 'error');
+                    }
+                    
+                } else {
+                    addResult(`❌ Error HTTP: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-ejecutar tests al cargar la página
+        window.addEventListener('load', () => {
+            addResult('🚀 Página cargada. Haz clic en los botones para ejecutar los tests.', 'info');
+        });
+    </script>
+</body>
+</html>

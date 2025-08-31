@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventura de Aprendizaje con IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #87CEEB, #98FB98);
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+            text-align: center;
+        }
+        
+        #startScreen h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: bounce 2s infinite;
+        }
+        
+        #startScreen p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .button {
+            background: linear-gradient(145deg, #FF6B6B, #FF5252);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 8px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+        
+        .button:active {
+            transform: translateY(-1px);
+        }
+        
+        .start-button {
+            background: linear-gradient(145deg, #4CAF50, #45A049);
+            font-size: 24px;
+            padding: 20px 40px;
+            animation: pulse 2s infinite;
+        }
+        
+        .teach-button {
+            background: linear-gradient(145deg, #4CAF50, #45A049);
+        }
+        
+        .test-button {
+            background: linear-gradient(145deg, #2196F3, #1976D2);
+        }
+        
+        .adventure-button {
+            background: linear-gradient(145deg, #9C27B0, #7B1FA2);
+        }
+        
+        .level-button {
+            background: linear-gradient(145deg, #FF9800, #F57C00);
+        }
+        
+        #ui {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        #levelSelector {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.95);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        #playerStats {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            min-width: 150px;
+        }
+        
+        #speechBubble {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px 30px;
+            border-radius: 25px;
+            border: 4px solid #333;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            display: none;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        #speechBubble::before {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 20px solid transparent;
+            border-top-color: #333;
+        }
+        
+        #speechBubble::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 16px solid transparent;
+            border-top-color: white;
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 14px;
+            max-width: 300px;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .answer-panel {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 20px;
+            display: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .answer-option {
+            display: block;
+            margin: 10px 0;
+            padding: 12px 20px;
+            background: linear-gradient(145deg, #FFE082, #FFC107);
+            border: 3px solid #FF8F00;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        .answer-option:hover {
+            background: linear-gradient(145deg, #FFC107, #FF8F00);
+            transform: scale(1.05);
+        }
+        
+        .answer-option:active {
+            transform: scale(0.95);
+        }
+        
+        #achievementPopup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, #4CAF50, #45A049);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            z-index: 1500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: bounce 1s ease-out;
+        }
+        
+        #progressBar {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 200px;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        #progressFill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFloat 2s ease-out forwards;
+        }
+        
+        @keyframes particleFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.5);
+            }
+        }
+        
+        .environment-selector {
+            position: absolute;
+            top: 80px;
+            left: 15px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 15px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .env-button {
+            padding: 8px 12px;
+            background: #E3F2FD;
+            border: 2px solid #2196F3;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .env-button:hover, .env-button.active {
+            background: #2196F3;
+            color: white;
+        }
+    </style>
+</head>
+<body style="margin:0;padding:0;overflow:hidden;">
+    <div id="gameContainer">
+        <!-- Pantalla de inicio -->
+        <div id="startScreen">
+            <h1>🤖 Aventura de IA 🌟</h1>
+            <p>¡Hola! Soy tu amigo robot y quiero aprender contigo sobre Inteligencia Artificial.<br>
+            ¡Enséñame formas, frutas y más! Mientras más me enseñes, ¡más inteligente me volveré!</p>
+            <button class="button start-button" onclick="startGame()">¡Empezar Aventura!</button>
+        </div>
+        
+        <!-- UI del juego -->
+        <div id="ui" style="display: none;">
+            <button class="button teach-button" onclick="startTeaching()">🎓 Enseñar IA</button>
+            <button class="button test-button" onclick="startTesting()">🧠 Probar IA</button>
+            <button class="button adventure-button" onclick="startStoryMode()">📖 Modo Historia</button>
+            <button class="button level-button" onclick="nextLevel()">⬆️ Siguiente Nivel</button>
+            <button class="button" onclick="resetGame()">🔄 Reiniciar</button>
+        </div>
+        
+        <!-- Selector de nivel -->
+        <div id="levelSelector" style="display: none;">
+            <span>Nivel <span id="currentLevel">1</span>: <span id="levelName">Formas Básicas</span></span>
+        </div>
+        
+        <!-- Selector de ambiente -->
+        <div class="environment-selector" style="display: none;">
+            <div class="env-button active" onclick="changeEnvironment('lab')">🧪 Laboratorio</div>
+            <div class="env-button" onclick="changeEnvironment('park')">🌳 Parque</div>
+            <div class="env-button" onclick="changeEnvironment('space')">🚀 Espacio</div>
+            <div class="env-button" onclick="changeEnvironment('home')">🏠 Casa</div>
+        </div>
+        
+        <!-- Estadísticas del jugador -->
+        <div id="playerStats" style="display: none;">
+            <div class="stat-item">
+                <span>Ejemplos:</span>
+                <span id="exampleCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Precisión IA:</span>
+                <span id="accuracy">0%</span>
+            </div>
+            <div class="stat-item">
+                <span>Monedas:</span>
+                <span id="coins">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Logros:</span>
+                <span id="achievements">0/15</span>
+            </div>
+        </div>
+        
+        <!-- Burbuja de diálogo -->
+        <div id="speechBubble"></div>
+        
+        <!-- Panel de respuestas -->
+        <div class="answer-panel" id="answerPanel">
+            <div><strong>¿Qué es esto?</strong></div>
+            <div id="answerOptions"></div>
+        </div>
+        
+        <!-- Popup de logros -->
+        <div id="achievementPopup">
+            <div id="achievementText">¡Logro Desbloqueado!</div>
+        </div>
+        
+        <!-- Instrucciones -->
+        <div id="instructions" style="display: none;">
+            <strong>🎮 Controles:</strong><br>
+            • Arrastra para rotar la cámara<br>
+            • Rueda del ratón para acercar/alejar<br>
+            • Haz clic en los botones para jugar<br><br>
+            <strong>🎯 Objetivo:</strong><br>
+            ¡Enseña a tu robot amigo y mira cómo aprende!
+        </div>
+        
+        <!-- Barra de progreso -->
+        <div id="progressBar" style="display: none;">
+            <div id="progressFill"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Estado del juego
+        let scene, camera, renderer, robot;
+        let gameMode = 'idle';
+        let currentLevel = 1;
+        let currentEnvironment = 'lab';
+        let currentShape = null;
+        let trainingData = [];
+        let playerCoins = 0;
+        let playerAchievements = [];
+        let storyProgress = 0;
+        
+        // Partes del robot para animación
+        let robotHead, robotBody, robotLeftArm, robotRightArm;
+        let robotEyes, robotMouth, robotLeftEye, robotRightEye;
+        
+        // Configuración de niveles
+        const levels = {
+            1: { name: "Formas Básicas", items: ["círculo", "triángulo", "cuadrado"], colors: [0xFF6B6B, 0x4ECDC4, 0x45B7D1] },
+            2: { name: "Frutas Deliciosas", items: ["manzana", "banana", "naranja"], colors: [0xFF0000, 0xFFFF00, 0xFFA500] },
+            3: { name: "Animales Amigos", items: ["perro", "gato", "pájaro"], colors: [0x8B4513, 0xFFA500, 0x87CEEB] },
+            4: { name: "Emociones", items: ["feliz", "triste", "sorprendido"], colors: [0xFFD700, 0x4169E1, 0xFF69B4] }
+        };
+        
+        // Sistema de logros
+        const achievementList = [
+            { id: 'first_teach', name: '¡Primer Maestro!', desc: 'Enseñaste tu primera forma', coins: 10 },
+            { id: 'fast_learner', name: '¡Aprendiz Rápido!', desc: 'El robot adivinó correctamente', coins: 15 },
+            { id: 'patient_teacher', name: '¡Maestro Paciente!', desc: '10 ejemplos enseñados', coins: 25 },
+            { id: 'level_master', name: '¡Maestro de Nivel!', desc: 'Completaste el nivel 2', coins: 50 },
+            { id: 'coin_collector', name: '¡Coleccionista!', desc: '100 monedas ganadas', coins: 20 },
+            { id: 'ai_expert', name: '¡Experto en IA!', desc: '90% de precisión alcanzada', coins: 75 },
+            { id: 'explorer', name: '¡Explorador!', desc: 'Visitaste todos los ambientes', coins: 30 },
+            { id: 'story_teller', name: '¡Narrador!', desc: 'Completaste el modo historia', coins: 100 },
+            { id: 'perfect_score', name: '¡Puntuación Perfecta!', desc: '100% de precisión', coins: 150 },
+            { id: 'dedication', name: '¡Dedicación!', desc: '50 ejemplos enseñados', coins: 40 },
+            { id: 'variety_master', name: '¡Maestro Variado!', desc: 'Enseñaste en todos los niveles', coins: 60 },
+            { id: 'robot_friend', name: '¡Mejor Amigo!', desc: 'Jugaste durante 10 minutos', coins: 25 },
+            { id: 'quick_thinker', name: '¡Pensador Rápido!', desc: 'Respuesta correcta en 3 segundos', coins: 35 },
+            { id: 'environment_changer', name: '¡Decorador!', desc: 'Cambiaste de ambiente 5 veces', coins: 20 },
+            { id: 'ai_master', name: '¡Maestro de IA!', desc: 'Desbloqueaste todos los logros', coins: 200 }
+        ];
+        
+        // Mensajes educativos por nivel
+        const educationalMessages = {
+            1: [
+                "¡Las formas son los bloques básicos de todo! La IA aprende a reconocerlas como tú.",
+                "Cada vez que me enseñas, creo conexiones en mi 'cerebro digital'.",
+                "¡Igual que tú necesitas práctica para aprender, yo necesito muchos ejemplos!"
+            ],
+            2: [
+                "¡Las frutas tienen diferentes formas, colores y texturas! Es más difícil para la IA.",
+                "Mi 'red neuronal' compara lo que veo con lo que me has enseñado.",
+                "¡Cuantas más frutas me muestres, mejor podré reconocerlas!"
+            ],
+            3: [
+                "¡Los animales son súper complicados! Tienen diferentes poses y tamaños.",
+                "La IA en la vida real ayuda a identificar animales en peligro de extinción.",
+                "¡Mi algoritmo busca patrones como orejas, colas y formas corporales!"
+            ],
+            4: [
+                "¡Las emociones son lo más difícil! Incluso para los humanos.",
+                "La IA emocional ayuda a hacer videojuegos y aplicaciones más divertidas.",
+                "¡Estoy aprendiendo a 'leer' expresiones como lo haces tú!"
+            ]
+        };
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            document.getElementById('levelSelector').style.display = 'block';
+            document.querySelector('.environment-selector').style.display = 'block';
+            document.getElementById('playerStats').style.display = 'block';
+            document.getElementById('instructions').style.display = 'block';
+            document.getElementById('progressBar').style.display = 'block';
+            
+            init();
+        }
+        
+        function init() {
+            // Crear escena
+            scene = new THREE.Scene();
+            
+            // Crear cámara
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3, 10);
+            camera.lookAt(0, 1, 0);
+            
+            // Crear renderizador
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+            
+            // Configurar ambiente inicial
+            changeEnvironment('lab');
+            
+            // Crear robot
+            createRobot();
+            
+            // Crear suelo
+            createGround();
+            
+            // Agregar controles
+            addMouseControls();
+            
+            // Iniciar loop de animación
+            animate();
+            
+            // Mensaje de bienvenida
+            showSpeech("¡Hola! Soy AIBOT, tu amigo robot. ¡Vamos a aprender juntos sobre Inteligencia Artificial! 🤖✨", 4000);
+            
+            // Actualizar UI
+            updateUI();
+            
+            // Iniciar temporizador para logro de tiempo
+            setTimeout(() => checkAchievement('robot_friend'), 600000); // 10 minutos
+        }
+        
+        function createRobot() {
+            robot = new THREE.Group();
+            
+            // Cuerpo del robot
+            const bodyGeometry = new THREE.CylinderGeometry(0.8, 1, 2, 8);
+            const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4CAF50 });
+            robotBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            robotBody.position.y = 1;
+            robotBody.castShadow = true;
+            robot.add(robotBody);
+            
+            // Cabeza del robot
+            const headGeometry = new THREE.SphereGeometry(0.6, 16, 16);
+            const headMaterial = new THREE.MeshLambertMaterial({ color: 0x2196F3 });
+            robotHead = new THREE.Mesh(headGeometry, headMaterial);
+            robotHead.position.y = 2.8;
+            robotHead.castShadow = true;
+            robot.add(robotHead);
+            
+            // Ojos del robot
+            const eyeGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+            const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            
+            robotLeftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            robotLeftEye.position.set(-0.25, 2.9, 0.5);
+            robot.add(robotLeftEye);
+            
+            robotRightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            robotRightEye.position.set(0.25, 2.9, 0.5);
+            robot.add(robotRightEye);
+            
+            // Boca del robot
+            const mouthGeometry = new THREE.RingGeometry(0.15, 0.25, 8, 1, 0, Math.PI);
+            const mouthMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            robotMouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+            robotMouth.position.set(0, 2.55, 0.5);
+            robotMouth.rotation.z = Math.PI;
+            robot.add(robotMouth);
+            
+            // Brazos del robot
+            const armGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1.5);
+            const armMaterial = new THREE.MeshLambertMaterial({ color: 0xFF9800 });
+            
+            robotLeftArm = new THREE.Mesh(armGeometry, armMaterial);
+            robotLeftArm.position.set(-1.2, 1.5, 0);
+            robotLeftArm.rotation.z = Math.PI / 6;
+            robotLeftArm.castShadow = true;
+            robot.add(robotLeftArm);
+            
+            robotRightArm = new THREE.Mesh(armGeometry, armMaterial);
+            robotRightArm.position.set(1.2, 1.5, 0);
+            robotRightArm.rotation.z = -Math.PI / 6;
+            robotRightArm.castShadow = true;
+            robot.add(robotRightArm);
+            
+            // Antena del robot
+            const antennaGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.5);
+            const antennaMaterial = new THREE.MeshLambertMaterial({ color: 0xFFD700 });
+            const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+            antenna.position.set(0, 3.4, 0);
+            robot.add(antenna);
+            
+            // Esfera en la antena
+            const sphereGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
+            const antennaSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            antennaSphere.position.set(0, 3.7, 0);
+            robot.add(antennaSphere);
+            
+            scene.add(robot);
+        }
+        
+        function createGround() {
+            const groundGeometry = new THREE.PlaneGeometry(30, 30);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+        
+        function changeEnvironment(env) {
+            currentEnvironment = env;
+            
+            // Limpiar luces existentes
+            const lights = scene.children.filter(child => child.type.includes('Light'));
+            lights.forEach(light => scene.remove(light));
+            
+            // Configurar ambiente según selección
+            switch (env) {
+                case 'lab':
+                    scene.background = new THREE.Color(0xE8F4F8);
+                    addLights(0xffffff, 0.7, 0xffffff, 0.9);
+                    break;
+                case 'park':
+                    scene.background = new THREE.Color(0x87CEEB);
+                    addLights(0xffffaa, 0.6, 0xffffaa, 1.0);
+                    break;
+                case 'space':
+                    scene.background = new THREE.Color(0x000011);
+                    addLights(0xaaaaff, 0.5, 0xffffff, 0.8);
+                    break;
+                case 'home':
+                    scene.background = new THREE.Color(0xFFF8E1);
+                    addLights(0xffeeaa, 0.8, 0xffeeaa, 0.7);
+                    break;
+            }
+            
+            // Actualizar botones de ambiente
+            document.querySelectorAll('.env-button').forEach(btn => btn.classList.remove('active'));
+            event?.target?.classList.add('active');
+            
+            // Logro de explorador
+            const environments = ['lab', 'park', 'space', 'home'];
+            const visitedEnvs = JSON.parse(localStorage.getItem('visitedEnvs') || '[]');
+            if (!visitedEnvs.includes(env)) {
+                visitedEnvs.push(env);
+                localStorage.setItem('visitedEnvs', JSON.stringify(visitedEnvs));
+                
+                if (visitedEnvs.length >= 4) {
+                    checkAchievement('explorer');
+                }
+            }
+        }
+        
+        function addLights(ambientColor, ambientIntensity, directionalColor, directionalIntensity) {
+            const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(directionalColor, directionalIntensity);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+        }
+        
+        function createShape(type) {
+            if (currentShape) {
+                scene.remove(currentShape);
+            }
+            
+            let geometry, material, shape;
+            const levelData = levels[currentLevel];
+            const colors = levelData.colors;
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            switch (currentLevel) {
+                case 1: // Formas
+                    shape = createBasicShape(type, randomColor);
+                    break;
+                case 2: // Frutas
+                    shape = createFruit(type, randomColor);
+                    break;
+                case 3: // Animales
+                    shape = createAnimal(type, randomColor);
+                    break;
+                case 4: // Emociones
+                    shape = createEmotion(type, randomColor);
+                    break;
+            }
+            
+            if (shape) {
+                shape.position.set(4, 1.5, 0);
+                shape.castShadow = true;
+                shape.userData = { type: type };
+                
+                currentShape = shape;
+                scene.add(shape);
+                
+                // Animación de entrada
+                shape.scale.set(0, 0, 0);
+                animateShapeEntrance(shape);
+            }
+            
+            return shape;
+        }
+        
+        function createBasicShape(type, color) {
+            let geometry, material;
+            
+            switch (type) {
+                case 'círculo':
+                    geometry = new THREE.CylinderGeometry(0.8, 0.8, 0.2, 32);
+                    break;
+                case 'triángulo':
+                    geometry = new THREE.ConeGeometry(0.8, 0.2, 3);
+                    break;
+                case 'cuadrado':
+                    geometry = new THREE.BoxGeometry(1.6, 0.2, 1.6);
+                    break;
+            }
+            
+            material = new THREE.MeshLambertMaterial({ color: color });
+            return new THREE.Mesh(geometry, material);
+        }
+        
+        function createFruit(type, color) {
+            let geometry, material;
+            
+            switch (type) {
+                case 'manzana':
+                    geometry = new THREE.SphereGeometry(0.8, 16, 16);
+                    geometry.scale(1, 0.9, 1);
+                    break;
+                case 'banana':
+                    geometry = new THREE.CylinderGeometry(0.3, 0.2, 2, 8);
+                    break;
+                case 'naranja':
+                    geometry = new THREE.SphereGeometry(0.7, 16, 16);
+                    break;
+            }
+            
+            material = new THREE.MeshLambertMaterial({ color: color });
+            const fruit = new THREE.Mesh(geometry, material);
+            
+            if (type === 'banana') {
+                fruit.rotation.z = Math.PI / 4;
+            }
+            
+            return fruit;
+        }
+        
+        function createAnimal(type, color) {
+            const group = new THREE.Group();
+            let bodyGeometry, headGeometry;
+            const material = new THREE.MeshLambertMaterial({ color: color });
+            
+            switch (type) {
+                case 'perro':
+                    // Cuerpo
+                    bodyGeometry = new THREE.BoxGeometry(1.2, 0.6, 0.8);
+                    const dogBody = new THREE.Mesh(bodyGeometry, material);
+                    group.add(dogBody);
+                    
+                    // Cabeza
+                    headGeometry = new THREE.BoxGeometry(0.6, 0.5, 0.6);
+                    const dogHead = new THREE.Mesh(headGeometry, material);
+                    dogHead.position.set(0.7, 0.2, 0);
+                    group.add(dogHead);
+                    
+                    // Orejas
+                    const earGeometry = new THREE.BoxGeometry(0.2, 0.4, 0.1);
+                    const leftEar = new THREE.Mesh(earGeometry, material);
+                    leftEar.position.set(0.6, 0.5, -0.2);
+                    const rightEar = new THREE.Mesh(earGeometry, material);
+                    rightEar.position.set(0.6, 0.5, 0.2);
+                    group.add(leftEar);
+                    group.add(rightEar);
+                    break;
+                    
+                case 'gato':
+                    // Cuerpo
+                    bodyGeometry = new THREE.BoxGeometry(1, 0.5, 0.7);
+                    const catBody = new THREE.Mesh(bodyGeometry, material);
+                    group.add(catBody);
+                    
+                    // Cabeza
+                    headGeometry = new THREE.SphereGeometry(0.4, 12, 12);
+                    const catHead = new THREE.Mesh(headGeometry, material);
+                    catHead.position.set(0.6, 0.3, 0);
+                    group.add(catHead);
+                    
+                    // Cola
+                    const tailGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1);
+                    const tail = new THREE.Mesh(tailGeometry, material);
+                    tail.position.set(-0.7, 0.5, 0);
+                    tail.rotation.z = Math.PI / 3;
+                    group.add(tail);
+                    break;
+                    
+                case 'pájaro':
+                    // Cuerpo
+                    bodyGeometry = new THREE.SphereGeometry(0.5, 12, 12);
+                    bodyGeometry.scale(1.2, 1, 1);
+                    const birdBody = new THREE.Mesh(bodyGeometry, material);
+                    group.add(birdBody);
+                    
+                    // Cabeza
+                    headGeometry = new THREE.SphereGeometry(0.3, 12, 12);
+                    const birdHead = new THREE.Mesh(headGeometry, material);
+                    birdHead.position.set(0.5, 0.2, 0);
+                    group.add(birdHead);
+                    
+                    // Alas
+                    const wingGeometry = new THREE.BoxGeometry(0.6, 0.1, 0.4);
+                    const leftWing = new THREE.Mesh(wingGeometry, material);
+                    leftWing.position.set(0, 0, -0.4);
+                    leftWing.rotation.z = Math.PI / 6;
+                    const rightWing = new THREE.Mesh(wingGeometry, material);
+                    rightWing.position.set(0, 0, 0.4);
+                    rightWing.rotation.z = -Math.PI / 6;
+                    group.add(leftWing);
+                    group.add(rightWing);
+                    break;
+            }
+            
+            return group;
+        }
+        
+        function createEmotion(type, color) {
+            const group = new THREE.Group();
+            
+            // Cara base
+            const faceGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+            const faceMaterial = new THREE.MeshLambertMaterial({ color: 0xFFE0B2 });
+            const face = new THREE.Mesh(faceGeometry, faceMaterial);
+            group.add(face);
+            
+            // Ojos
+            const eyeGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.3, 0.2, 0.7);
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.3, 0.2, 0.7);
+            group.add(leftEye);
+            group.add(rightEye);
+            
+            // Boca según emoción
+            let mouthGeometry;
+            const mouthMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            
+            switch (type) {
+                case 'feliz':
+                    mouthGeometry = new THREE.RingGeometry(0.2, 0.25, 8, 1, 0, Math.PI);
+                    break;
+                case 'triste':
+                    mouthGeometry = new THREE.RingGeometry(0.2, 0.25, 8, 1, Math.PI, Math.PI);
+                    break;
+                case 'sorprendido':
+                    mouthGeometry = new THREE.RingGeometry(0.15, 0.2, 8);
+                    break;
+            }
+            
+            const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+            mouth.position.set(0, -0.2, 0.7);
+            if (type === 'triste') mouth.rotation.z = Math.PI;
+            group.add(mouth);
+            
+            return group;
+        }
+        
+        function animateShapeEntrance(shape) {
+            let scale = 0;
+            function grow() {
+                scale += 0.05;
+                shape.scale.setScalar(scale);
+                shape.rotation.y += 0.1;
+                
+                if (scale < 1) {
+                    requestAnimationFrame(grow);
+                } else {
+                    shape.scale.setScalar(1);
+                }
+            }
+            grow();
+        }
+        
+        function startTeaching() {
+            gameMode = 'teaching';
+            const levelData = levels[currentLevel];
+            const randomItem = levelData.items[Math.floor(Math.random() * levelData.items.length)];
+            
+            createShape(randomItem);
+            showSpeech(`¿Qué es esto? ¡Enséñame para que pueda aprender! 🤔`, 0);
+            
+            showAnswerPanel(levelData.items);
+            animateRobotEmotion('curious');
+            
+            // Mensaje educativo aleatorio
+            const messages = educationalMessages[currentLevel];
+            setTimeout(() => {
+                showSpeech(messages[Math.floor(Math.random() * messages.length)], 4000);
+            }, 8000);
+        }
+        
+        function showAnswerPanel(options) {
+            const panel = document.getElementById('answerPanel');
+            const optionsContainer = document.getElementById('answerOptions');
+            
+            optionsContainer.innerHTML = '';
+            
+            options.forEach(option => {
+                const button = document.createElement('div');
+                button.className = 'answer-option';
+                button.textContent = getEmoji(option) + ' ' + option.charAt(0).toUpperCase() + option.slice(1);
+                button.onclick = () => guessShape(option);
+                optionsContainer.appendChild(button);
+            });
+            
+            panel.style.display = 'block';
+        }
+        
+        function getEmoji(item) {
+            const emojis = {
+                'círculo': '🔵', 'triángulo': '🔺', 'cuadrado': '⬜',
+                'manzana': '🍎', 'banana': '🍌', 'naranja': '🍊',
+                'perro': '🐕', 'gato': '🐱', 'pájaro': '🐦',
+                'feliz': '😊', 'triste': '😢', 'sorprendido': '😮'
+            };
+            return emojis[item] || '❓';
+        }
+        
+        function guessShape(guessedType) {
+            if (!currentShape || gameMode !== 'teaching') return;
+            
+            const correctType = currentShape.userData.type;
+            const isCorrect = guessedType === correctType;
+            const startTime = Date.now();
+            
+            // Agregar a datos de entrenamiento
+            trainingData.push({
+                shape: correctType,
+                guess: guessedType,
+                correct: isCorrect,
+                level: currentLevel,
+                timestamp: startTime
+            });
+            
+            // Respuesta rápida
+            const responseTime = Date.now() - startTime;
+            if (responseTime < 3000 && isCorrect) {
+                checkAchievement('quick_thinker');
+            }
+            
+            if (isCorrect) {
+                showSpeech(`¡Sí! ¡Es un ${correctType}! ¡Estoy aprendiendo gracias a ti! 😊`, 3000);
+                animateRobotEmotion('happy');
+                addCoins(10);
+                createParticles(currentShape.position, 0xFFD700);
+                
+                // Logros
+                if (trainingData.length === 1) checkAchievement('first_teach');
+                if (trainingData.length === 10) checkAchievement('patient_teacher');
+                if (trainingData.length === 50) checkAchievement('dedication');
+            } else {
+                showSpeech(`¡Oops! En realidad es un ${correctType}. ¡Pero gracias por enseñarme! 🤯`, 3000);
+                animateRobotEmotion('confused');
+                addCoins(5);
+            }
+            
+            document.getElementById('answerPanel').style.display = 'none';
+            updateUI();
+            updateProgress();
+            
+            setTimeout(() => {
+                if (currentShape) {
+                    scene.remove(currentShape);
+                    currentShape = null;
+                }
+                gameMode = 'idle';
+                animateRobotEmotion('neutral');
+            }, 3500);
+        }
+        
+        function startTesting() {
+            const levelTrainingData = trainingData.filter(data => data.level === currentLevel);
+            
+            if (levelTrainingData.length < 3) {
+                showSpeech("¡Necesito más ejemplos para aprender! ¡Por favor enséñame primero! 📚", 3000);
+                animateRobotEmotion('confused');
+                return;
+            }
+            
+            gameMode = 'testing';
+            const levelData = levels[currentLevel];
+            const randomItem = levelData.items[Math.floor(Math.random() * levelData.items.length)];
+            
+            createShape(randomItem);
+            
+            // IA hace una predicción basada en datos de entrenamiento
+            const aiGuess = makeAIGuess(randomItem);
+            const isCorrect = aiGuess === randomItem;
+            
+            if (isCorrect) {
+                showSpeech(`¡Creo que esto es un ${aiGuess}! ¿Tengo razón? 😄`, 4000);
+                animateRobotEmotion('excited');
+                checkAchievement('fast_learner');
+                addCoins(20);
+                createParticles(currentShape.position, 0x4CAF50);
+            } else {
+                showSpeech(`Hmm... ¿creo que esto es un ${aiGuess}? ¡Todavía estoy aprendiendo! 🤔`, 4000);
+                animateRobotEmotion('confused');
+                addCoins(5);
+            }
+            
+            setTimeout(() => {
+                if (currentShape) {
+                    scene.remove(currentShape);
+                    currentShape = null;
+                }
+                gameMode = 'idle';
+                animateRobotEmotion('neutral');
+            }, 4500);
+        }
+        
+        function makeAIGuess(actualShape) {
+            const levelTrainingData = trainingData.filter(data => data.level === currentLevel);
+            const correctAnswers = levelTrainingData.filter(data => data.correct).length;
+            const totalAnswers = levelTrainingData.length;
+            
+            // Precisión basada en datos de entrenamiento
+            const baseAccuracy = Math.min(correctAnswers / Math.max(totalAnswers, 1), 0.95);
+            const bonusAccuracy = Math.min(totalAnswers * 0.02, 0.15);
+            const finalAccuracy = Math.min(baseAccuracy + bonusAccuracy, 0.98);
+            
+            const random = Math.random();
+            
+            if (random < finalAccuracy) {
+                return actualShape;
+            } else {
+                const levelData = levels[currentLevel];
+                const wrongShapes = levelData.items.filter(s => s !== actualShape);
+                return wrongShapes[Math.floor(Math.random() * wrongShapes.length)];
+            }
+        }
+        
+        function startStoryMode() {
+            const stories = [
+                "🤖 Érase una vez un robot llamado AIBOT que vivía en un laboratorio...",
+                "🌟 AIBOT tenía un gran sueño: ¡aprender todo sobre el mundo!",
+                "📚 Pero había un problema: AIBOT no sabía nada al principio.",
+                "👨‍🏫 Un día, conoció a niños increíbles que querían enseñarle.",
+                "🎓 Con cada lección, AIBOT se volvía más inteligente y feliz.",
+                "🏆 ¡Y así, AIBOT aprendió que la educación es la clave de todo!"
+            ];
+            
+            if (storyProgress < stories.length) {
+                showSpeech(stories[storyProgress], 5000);
+                storyProgress++;
+                
+                if (storyProgress >= stories.length) {
+                    checkAchievement('story_teller');
+                    storyProgress = 0;
+                }
+            } else {
+                showSpeech("¡Esa es mi historia favorita! ¿Quieres escucharla otra vez? 📖", 3000);
+                storyProgress = 0;
+            }
+            
+            animateRobotEmotion('excited');
+        }
+        
+        function nextLevel() {
+            if (currentLevel < 4) {
+                const levelTrainingData = trainingData.filter(data => data.level === currentLevel);
+                if (levelTrainingData.length < 5) {
+                    showSpeech("¡Necesitas enseñarme más en este nivel antes de continuar! 🎓", 3000);
+                    return;
+                }
+                
+                currentLevel++;
+                showSpeech(`¡Nivel ${currentLevel} desbloqueado! Ahora aprenderemos sobre: ${levels[currentLevel].name} 🎉`, 4000);
+                animateRobotEmotion('excited');
+                addCoins(50);
+                
+                if (currentLevel === 2) checkAchievement('level_master');
+                if (currentLevel === 4) checkAchievement('variety_master');
+                
+                createParticles(robot.position, 0xFF6B6B);
+                updateUI();
+            } else {
+                showSpeech("¡Ya completaste todos los niveles! ¡Eres un maestro de IA! 🏆", 3000);
+                checkAchievement('ai_master');
+            }
+        }
+        
+        function addCoins(amount) {
+            playerCoins += amount;
+            updateUI();
+            
+            // Logro de coleccionista
+            if (playerCoins >= 100 && !playerAchievements.includes('coin_collector')) {
+                checkAchievement('coin_collector');
+            }
+        }
+        
+        function checkAchievement(achievementId) {
+            if (playerAchievements.includes(achievementId)) return;
+            
+            const achievement = achievementList.find(a => a.id === achievementId);
+            if (!achievement) return;
+            
+            playerAchievements.push(achievementId);
+            addCoins(achievement.coins);
+            showAchievementPopup(achievement);
+            
+            // Logro maestro (todos los logros)
+            if (playerAchievements.length >= 14 && !playerAchievements.includes('ai_master')) {
+                setTimeout(() => checkAchievement('ai_master'), 2000);
+            }
+        }
+        
+        function showAchievementPopup(achievement) {
+            const popup = document.getElementById('achievementPopup');
+            document.getElementById('achievementText').innerHTML = `
+                🏆 ¡${achievement.name}!<br>
+                ${achievement.desc}<br>
+                +${achievement.coins} monedas
+            `;
+            
+            popup.style.display = 'block';
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 3000);
+        }
+        
+        function createParticles(position, color) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.backgroundColor = `#${color.toString(16).padStart(6, '0')}`;
+                particle.style.left = `${Math.random() * window.innerWidth}px`;
+                particle.style.top = `${Math.random() * window.innerHeight}px`;
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    document.body.removeChild(particle);
+                }, 2000);
+            }
+        }
+        
+        function animateRobotEmotion(emotion) {
+            // Resetear animaciones previas
+            robotHead.rotation.set(0, 0, 0);
+            robotLeftArm.rotation.z = Math.PI / 6;
+            robotRightArm.rotation.z = -Math.PI / 6;
+            
+            switch (emotion) {
+                case 'happy':
+                    animateNod();
+                    robotLeftArm.rotation.z = Math.PI / 2;
+                    robotRightArm.rotation.z = -Math.PI / 2;
+                    animateJump();
+                    break;
+                case 'confused':
+                    animateHeadShake();
+                    animateScratchHead();
+                    break;
+                case 'excited':
+                    animateWave();
+                    animateBounce();
+                    break;
+                case 'curious':
+                    robotHead.rotation.x = 0.4;
+                    animateHeadTilt();
+                    break;
+                case 'neutral':
+                default:
+                    break;
+            }
+        }
+        
+        function animateNod() {
+            const startRotation = robotHead.rotation.x;
+            let time = 0;
+            
+            function nod() {
+                time += 0.15;
+                robotHead.rotation.x = startRotation + Math.sin(time * 4) * 0.3;
+                
+                if (time < 3) {
+                    requestAnimationFrame(nod);
+                } else {
+                    robotHead.rotation.x = startRotation;
+                }
+            }
+            nod();
+        }
+        
+        function animateHeadShake() {
+            const startRotation = robotHead.rotation.y;
+            let time = 0;
+            
+            function shake() {
+                time += 0.12;
+                robotHead.rotation.y = startRotation + Math.sin(time * 5) * 0.4;
+                
+                if (time < 2.5) {
+                    requestAnimationFrame(shake);
+                } else {
+                    robotHead.rotation.y = startRotation;
+                }
+            }
+            shake();
+        }
+        
+        function animateWave() {
+            let time = 0;
+            
+            function wave() {
+                time += 0.2;
+                robotRightArm.rotation.z = -Math.PI / 6 + Math.sin(time * 6) * 0.8;
+                
+                if (time < 3) {
+                    requestAnimationFrame(wave);
+                } else {
+                    robotRightArm.rotation.z = -Math.PI / 6;
+                }
+            }
+            wave();
+        }
+        
+        function animateJump() {
+            const startY = robot.position.y;
+            let time = 0;
+            
+            function jump() {
+                time += 0.1;
+                robot.position.y = startY + Math.abs(Math.sin(time * 8)) * 0.5;
+                
+                if (time < 2) {
+                    requestAnimationFrame(jump);
+                } else {
+                    robot.position.y = startY;
+                }
+            }
+            jump();
+        }
+        
+        function animateBounce() {
+            const startScale = robot.scale.y;
+            let time = 0;
+            
+            function bounce() {
+                time += 0.15;
+                const scale = startScale + Math.sin(time * 10) * 0.1;
+                robot.scale.set(1, scale, 1);
+                
+                if (time < 2) {
+                    requestAnimationFrame(bounce);
+                } else {
+                    robot.scale.set(1, 1, 1);
+                }
+            }
+            bounce();
+        }
+        
+        function animateHeadTilt() {
+            let time = 0;
+            
+            function tilt() {
+                time += 0.05;
+                robotHead.rotation.z = Math.sin(time * 2) * 0.2;
+                
+                if (time < 4) {
+                    requestAnimationFrame(tilt);
+                } else {
+                    robotHead.rotation.z = 0;
+                }
+            }
+            tilt();
+        }
+        
+        function animateScratchHead() {
+            setTimeout(() => {
+                robotLeftArm.rotation.z = Math.PI / 3;
+                robotLeftArm.rotation.y = Math.PI / 4;
+                
+                setTimeout(() => {
+                    robotLeftArm.rotation.z = Math.PI / 6;
+                    robotLeftArm.rotation.y = 0;
+                }, 1500);
+            }, 1000);
+        }
+        
+        function showSpeech(text, duration = 3000) {
+            const bubble = document.getElementById('speechBubble');
+            bubble.innerHTML = text;
+            bubble.style.display = 'block';
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    bubble.style.display = 'none';
+                }, duration);
+            }
+        }
+        
+        function updateUI() {
+            document.getElementById('exampleCount').textContent = trainingData.length;
+            document.getElementById('currentLevel').textContent = currentLevel;
+            document.getElementById('levelName').textContent = levels[currentLevel].name;
+            document.getElementById('coins').textContent = playerCoins;
+            document.getElementById('achievements').textContent = `${playerAchievements.length}/15`;
+            
+            // Calcular precisión
+            const levelData = trainingData.filter(d => d.level === currentLevel);
+            const correctAnswers = levelData.filter(d => d.correct).length;
+            const accuracy = levelData.length > 0 ? Math.round((correctAnswers / levelData.length) * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            
+            // Verificar logros de precisión
+            if (accuracy >= 90 && !playerAchievements.includes('ai_expert')) {
+                checkAchievement('ai_expert');
+            }
+            if (accuracy >= 100 && !playerAchievements.includes('perfect_score')) {
+                checkAchievement('perfect_score');
+            }
+        }
+        
+        function updateProgress() {
+            const maxExamples = 20;
+            const progress = Math.min((trainingData.length / maxExamples) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        function resetGame() {
+            trainingData = [];
+            playerCoins = 0;
+            playerAchievements = [];
+            currentLevel = 1;
+            gameMode = 'idle';
+            storyProgress = 0;
+            
+            if (currentShape) {
+                scene.remove(currentShape);
+                currentShape = null;
+            }
+            
+            document.getElementById('answerPanel').style.display = 'none';
+            updateUI();
+            updateProgress();
+            animateRobotEmotion('neutral');
+            showSpeech("¡Empecemos de nuevo! ¡Estoy listo para una nueva aventura de aprendizaje! 🤖✨", 3000);
+        }
+        
+        function addMouseControls() {
+            let mouseX = 0;
+            let mouseY = 0;
+            let isMouseDown = false;
+            
+            document.addEventListener('mousemove', (event) => {
+                if (!isMouseDown) return;
+                
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+                
+                // Rotar cámara alrededor del robot
+                const spherical = new THREE.Spherical();
+                spherical.setFromVector3(camera.position);
+                spherical.theta -= deltaX * 0.01;
+                spherical.phi += deltaY * 0.01;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                
+                camera.position.setFromSpherical(spherical);
+                camera.lookAt(0, 1, 0);
+                
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            document.addEventListener('mousedown', (event) => {
+                isMouseDown = true;
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isMouseDown = false;
+            });
+            
+            // Zoom con rueda del ratón
+            document.addEventListener('wheel', (event) => {
+                const distance = camera.position.distanceTo(new THREE.Vector3(0, 1, 0));
+                const newDistance = Math.max(6, Math.min(20, distance + event.deltaY * 0.02));
+                
+                const direction = new THREE.Vector3();
+                direction.subVectors(camera.position, new THREE.Vector3(0, 1, 0)).normalize();
+                camera.position.copy(new THREE.Vector3(0, 1, 0).add(direction.multiplyScalar(newDistance)));
+            });
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animación suave del robot
+            if (robot) {
+                robot.rotation.y += 0.003;
+                robotBody.position.y = 1 + Math.sin(Date.now() * 0.002) * 0.05;
+                
+                // Parpadeo de ojos
+                if (Math.random() < 0.02) {
+                    robotLeftEye.scale.y = 0.1;
+                    robotRightEye.scale.y = 0.1;
+                    setTimeout(() => {
+                        robotLeftEye.scale.y = 1;
+                        robotRightEye.scale.y = 1;
+                    }, 150);
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Manejar redimensionamiento de ventana
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+<script>
+  // Sistema de comunicación con parent frame
+  function sendMessageToParent(type, payload) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type, payload }, '*');
+        console.log('📤 [Game] Mensaje enviado al parent:', type, payload);
+      }
+    } catch (error) {
+      console.error('❌ [Game] Error enviando mensaje al parent:', error);
+    }
+  }
+  
+  // Notificar que el juego está listo
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      sendMessageToParent('GAME_READY', { 
+        timestamp: Date.now(),
+        title: 'Aventura de Aprendizaje con IA',
+        gameType: 'threejs'
+      });
+    }, 1000);
+  });
+  
+  // Escuchar mensajes del parent
+  window.addEventListener('message', function(event) {
+    if (event.data.type === 'PARENT_READY') {
+      console.log('✅ [Game] Parent frame está listo');
+    }
+  });
+  
+  // Sistema de eventos de juego personalizable
+  let gameStarted = false;
+  let gameScore = 0;
+  let gameStartTime = Date.now();
+  
+  function startGame() {
+    if (!gameStarted) {
+      gameStarted = true;
+      gameStartTime = Date.now();
+      sendMessageToParent('GAME_STARTED', { timestamp: gameStartTime });
+    }
+  }
+  
+  function updateScore(score) {
+    gameScore = score;
+    sendMessageToParent('SCORE_UPDATE', { score: gameScore });
+  }
+  
+  function completeGame(finalScore = null) {
+    const timeSpent = Math.floor((Date.now() - gameStartTime) / 1000);
+    sendMessageToParent('GAME_COMPLETED', { 
+      score: finalScore || gameScore,
+      timeSpent: timeSpent,
+      completed: true,
+      progress: 100
+    });
+  }
+  
+  // Auto-detección de eventos comunes
+  document.addEventListener('click', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  document.addEventListener('keydown', function() {
+    if (!gameStarted) startGame();
+  });
+  
+  // Prevenir context menu y selección
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+  
+  // Exponer funciones globalmente para uso en juegos
+  window.gameAPI = {
+    start: startGame,
+    updateScore: updateScore,
+    complete: completeGame,
+    sendMessage: sendMessageToParent
+  };
+  
+  console.log('🎮 [Game] Sistema de comunicación inicializado');
+</script>\n</body>
+</html>

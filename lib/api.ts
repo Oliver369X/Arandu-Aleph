@@ -190,8 +190,19 @@ class ApiService {
         url: response.url
       });
 
-      const data = await response.json();
-      console.log('🔍 [apiService] Datos JSON parseados:', data);
+      let data;
+      try {
+        data = await response.json();
+        console.log('🔍 [apiService] Datos JSON parseados:', data);
+      } catch (jsonError) {
+        console.error('❌ [apiService] Error parseando JSON - probablemente el backend devolvió HTML:', jsonError);
+        console.log('📄 [apiService] Response status:', response.status, response.statusText);
+        console.log('📄 [apiService] Response headers:', response.headers.get('Content-Type'));
+        return {
+          success: false,
+          error: 'El backend devolvió HTML en lugar de JSON. ¿Está corriendo correctamente en localhost:3001?'
+        };
+      }
 
       if (!response.ok) {
         console.log('❌ [apiService] Response no OK:', response.status, response.statusText);
@@ -526,11 +537,11 @@ class ApiService {
 
   // ==================== AI WRITING ASSISTANT ====================
 
-  async generateAIFeedback(subtopicId: string): Promise<ApiResponse<{
+  async generateWritingAssistantFeedback(subtopicId: string): Promise<ApiResponse<{
     subtopic: Subject;
     steps: AIFeedback[];
   }>> {
-    console.log('🔍 [apiService] Generando AI Feedback para subtopic:', subtopicId);
+    console.log('🔍 [apiService] Generando Writing Assistant Feedback para subtopic:', subtopicId);
     return this.request<{
       subtopic: Subject;
       steps: AIFeedback[];
@@ -641,6 +652,12 @@ class ApiService {
     return this.request<ClassAssignment[]>(`/class-assignments/teacher/${teacherId}`);
   }
 
+  async getEnrollmentsByTeacher(teacherId: string): Promise<ApiResponse<any[]>> {
+    console.log('🔍 [apiService] Obteniendo enrollments por profesor:', teacherId);
+    // Por ahora devolver array vacío hasta que se implemente el endpoint completo
+    return Promise.resolve({ success: true, data: [], message: 'Enrollments no implementado aún' });
+  }
+
   async getClassAssignmentsByGrade(gradeId: string): Promise<ApiResponse<ClassAssignment[]>> {
     console.log('🔍 [apiService] Obteniendo asignaciones por grado:', gradeId);
     return this.request<ClassAssignment[]>(`/class-assignments/grade/${gradeId}`);
@@ -685,6 +702,32 @@ class ApiService {
     return this.request<Subject[]>('/subjects');
   }
 
+  async getSubjectsByCreator(teacherId: string): Promise<ApiResponse<Subject[]>> {
+    console.log('🔍 [apiService] Obteniendo materias creadas por teacher:', teacherId);
+    const response = await this.request<any>(`/subjects/creator/${teacherId}`);
+    
+    // El backend retorna: { success: true, data: [...], count: n }
+    // Necesitamos extraer el array del campo 'data'
+    if (response.success && response.data && response.data.success && Array.isArray(response.data.data)) {
+      console.log('✅ [apiService] Subjects extraídos del backend:', response.data.data.length);
+      return {
+        success: true,
+        data: response.data.data as Subject[] // Extraer el array real
+      };
+    } else if (response.success && response.data && !response.data.success) {
+      // El backend devolvió error
+      console.log('❌ [apiService] Backend devolvió error:', response.data.error);
+      return {
+        success: false,
+        error: response.data.error || 'Error desconocido del backend'
+      };
+    } else {
+      // Error de conexión o formato inesperado
+      console.log('❌ [apiService] Error de conexión o formato:', response);
+      return response as ApiResponse<Subject[]>;
+    }
+  }
+
   async getSubjectById(id: string): Promise<ApiResponse<Subject>> {
     console.log('🔍 [apiService] Obteniendo materia por ID:', id);
     return this.request<Subject>(`/subjects/${id}`);
@@ -693,6 +736,11 @@ class ApiService {
   async createSubject(subjectData: {
     name: string;
     description?: string;
+    category?: string;
+    price?: number;
+    duration?: string;
+    difficulty?: string;
+    createdBy?: string;
   }): Promise<ApiResponse<Subject>> {
     console.log('🔍 [apiService] Creando materia:', subjectData);
     return this.request<Subject>('/subjects', {
@@ -760,22 +808,231 @@ class ApiService {
     }
   }
 
-  // Teacher-specific endpoints
+  // ==================== TEACHER DASHBOARD METHODS ====================
+
+  async getTeacherDashboardData(teacherId: string): Promise<{
+    courses: Subject[];
+    students: User[];
+    recentActivity: any[];
+    statistics: any;
+    enrollments?: any[];
+  }> {
+    console.log('🎯 [apiService] Obteniendo datos completos del dashboard para profesor:', teacherId);
+    
+    try {
+      // Hacer todas las llamadas en paralelo para mejor performance (INCLUYENDO ENROLLMENTS)
+      const [coursesResponse, studentsResponse, progressResponse, assignmentsResponse, enrollmentsResponse] = await Promise.all([
+        this.getSubjectsByCreator(teacherId), // ✅ SOLO SUBJECTS CREADOS POR ESTE TEACHER
+        this.getUsers(),
+        this.getAllProgress(),
+        this.getClassAssignmentsByTeacher(teacherId),
+        this.getEnrollmentsByTeacher(teacherId).catch(() => ({ success: false, data: [] })) // Fallback si no existe aún
+      ]);
+
+      const courses = coursesResponse.success && coursesResponse.data ? coursesResponse.data : [];
+      const allUsers = studentsResponse.success && studentsResponse.data ? studentsResponse.data : [];
+      const allProgress = progressResponse.success && progressResponse.data ? progressResponse.data : [];
+      const assignments = assignmentsResponse.success && assignmentsResponse.data ? assignmentsResponse.data : [];
+      const enrollments = enrollmentsResponse.success && enrollmentsResponse.data ? enrollmentsResponse.data : [];
+
+      // Debug logs temporales
+      console.log('🔍 [apiService] DEBUG - courses type:', typeof courses, 'isArray:', Array.isArray(courses), 'length:', courses?.length);
+      console.log('🔍 [apiService] DEBUG - students type:', typeof allUsers, 'isArray:', Array.isArray(allUsers), 'length:', allUsers?.length);
+      console.log('🔍 [apiService] DEBUG - progress type:', typeof allProgress, 'isArray:', Array.isArray(allProgress), 'length:', allProgress?.length);
+
+      // Filtrar solo estudiantes que están REALMENTE matriculados con este teacher
+      const enrolledStudentIds = new Set(enrollments.map(e => e.studentId));
+      const allStudents = allUsers.filter(user => 
+        user.roles && user.roles.some(role => 
+          role.toLowerCase().includes('student') || role.toLowerCase().includes('estudiante')
+        )
+      );
+      
+      // Priorizar estudiantes matriculados, pero mostrar todos si no hay enrollments aún
+      const students = enrollments.length > 0 
+        ? allStudents.filter(student => enrolledStudentIds.has(student.id))
+        : allStudents;
+
+      // Generar actividad reciente basada en progreso real
+      const recentActivity = this.generateRecentActivity(allProgress, students, courses);
+
+      // Calcular estadísticas (incluyendo datos de enrollments)
+      const statistics = this.calculateTeacherStatistics(courses, students, allProgress, assignments, enrollments);
+
+      console.log('✅ [apiService] Dashboard data obtenido exitosamente:', {
+        courses: courses.length,
+        students: students.length,
+        enrollments: enrollments.length,
+        activities: recentActivity.length
+      });
+
+      return {
+        courses,
+        students,
+        enrollments,
+        recentActivity,
+        statistics
+      };
+    } catch (error) {
+      console.error('❌ [apiService] Error fetching teacher dashboard data:', error);
+      return {
+        courses: [],
+        students: [],
+        enrollments: [],
+        recentActivity: [],
+        statistics: this.getDefaultStatistics()
+      };
+    }
+  }
+
+  private generateRecentActivity(progress: Progress[], students: User[], courses: Subject[]): any[] {
+    // Validaciones defensivas
+    if (!Array.isArray(progress)) progress = [];
+    if (!Array.isArray(students)) students = [];
+    if (!Array.isArray(courses)) courses = [];
+
+    const activities = progress
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 10)
+      .map((p, index) => {
+        const student = students.find(s => s.id === p.userId);
+        const course = courses.find(c => c.subtopics?.some(st => st.id === p.subtopicId));
+        
+        if (!student || !course) return null;
+
+        const activityTypes = [
+          {
+            type: 'student_progress',
+            message: `${student.name} completó ${p.percentage}% del módulo en ${course.name}`,
+            icon: 'Award'
+          },
+          {
+            type: 'assignment_submitted', 
+            message: `${student.name} avanzó en ${course.name}`,
+            icon: 'FileText'
+          }
+        ];
+
+        const activityType = activityTypes[index % activityTypes.length];
+        
+        return {
+          id: p.id,
+          type: activityType.type,
+          message: activityType.message,
+          time: this.formatTimeAgo(p.updatedAt),
+          icon: activityType.icon,
+          user: student.name,
+          timestamp: p.updatedAt
+        };
+      })
+      .filter(Boolean);
+
+    return activities;
+  }
+
+  private calculateTeacherStatistics(courses: Subject[], students: User[], progress: Progress[], assignments: any[], enrollments: any[] = []): any {
+    // Validaciones defensivas
+    if (!Array.isArray(courses)) courses = [];
+    if (!Array.isArray(students)) students = [];
+    if (!Array.isArray(progress)) progress = [];
+    if (!Array.isArray(assignments)) assignments = [];
+    if (!Array.isArray(enrollments)) enrollments = [];
+
+    const totalStudents = students.length;
+    const totalCourses = courses.length;
+    const totalProgress = progress.length;
+    
+    // Calcular progreso promedio
+    const avgProgress = totalProgress > 0 
+      ? Math.round(progress.reduce((sum, p) => sum + p.percentage, 0) / totalProgress)
+      : 0;
+
+    // Calcular tasa de finalización
+    const completedProgress = progress.filter(p => p.percentage === 100).length;
+    const completionRate = totalProgress > 0 
+      ? Math.round((completedProgress / totalProgress) * 100)
+      : 0;
+
+    // Simular ingresos mensuales basado en número de estudiantes
+    const monthlyRevenue = totalStudents * 50; // $50 por estudiante promedio
+
+    return {
+      totalCourses,
+      totalStudents,
+      monthlyRevenue,
+      avgProgress,
+      completionRate,
+      averageRating: 4.8,
+      newEnrollmentsThisWeek: Math.min(12, Math.floor(totalStudents * 0.1)),
+      certificatesIssued: completedProgress
+    };
+  }
+
+  private getDefaultStatistics(): any {
+    return {
+      totalCourses: 0,
+      totalStudents: 0,
+      monthlyRevenue: 0,
+      avgProgress: 0,
+      completionRate: 0,
+      averageRating: 0,
+      newEnrollmentsThisWeek: 0,
+      certificatesIssued: 0
+    };
+  }
+
+  private formatTimeAgo(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 60) {
+      return `Hace ${diffInMinutes} minutos`;
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+    } else {
+      const days = Math.floor(diffInMinutes / 1440);
+      return `Hace ${days} día${days > 1 ? 's' : ''}`;
+    }
+  }
+
   async getStudentsByTeacherId(teacherId: string): Promise<User[]> {
     try {
       console.log('🔍 [apiService] Obteniendo estudiantes para profesor:', teacherId);
-      // Usar endpoint de usuarios y filtrar por rol estudiante como fallback
+      
+      // Obtener asignaciones del profesor
+      const assignmentsResponse = await this.getClassAssignmentsByTeacher(teacherId);
+      
+      if (assignmentsResponse.success && assignmentsResponse.data) {
+        // Obtener todos los usuarios
+        const usersResponse = await this.getUsers();
+        
+        if (usersResponse.success && usersResponse.data) {
+          // Filtrar solo estudiantes
+          const students = usersResponse.data.filter(user => 
+            user.roles && user.roles.some(role => 
+              role.toLowerCase().includes('student') || role.toLowerCase().includes('estudiante')
+            )
+          );
+          
+          console.log('✅ [apiService] Estudiantes encontrados:', students.length);
+          return students;
+        }
+      }
+      
+      // Fallback: obtener todos los estudiantes
       const response = await this.request<User[]>('/usuario');
       if (response.success && response.data) {
-        // Filtrar solo estudiantes
         const students = response.data.filter(user => 
           user.roles && user.roles.some(role => 
             role.toLowerCase().includes('student') || role.toLowerCase().includes('estudiante')
           )
         );
-        console.log('✅ [apiService] Estudiantes encontrados:', students.length);
+        console.log('✅ [apiService] Estudiantes encontrados (fallback):', students.length);
         return students;
       }
+      
       return []
     } catch (error) {
       console.error('❌ [apiService] Error fetching teacher students:', error)
@@ -877,6 +1134,19 @@ class ApiService {
   async getGameStatistics(): Promise<ApiResponse<GameStatistics>> {
     console.log('📊 [apiService] Obteniendo estadísticas de juegos');
     return this.request<GameStatistics>('/ai-games/estadisticas');
+  }
+
+  // ===== AI FEEDBACK METHODS =====
+  async generateAIFeedback(subtopicId: string): Promise<ApiResponse<any>> {
+    console.log(`🤖 [apiService] Generando AI Feedback para subtopic: ${subtopicId}`);
+    return this.request<any>(`/ai-writing-assistant/generate-feedback/${subtopicId}`, {
+      method: 'POST'
+    });
+  }
+
+  async getAIFeedbacksBySubtopic(subtopicId: string): Promise<ApiResponse<any[]>> {
+    console.log(`📚 [apiService] Obteniendo AI Feedbacks para subtopic: ${subtopicId}`);
+    return this.request<any[]>(`/ai-feedback/subtopic/${subtopicId}`);
   }
 
   async createAIGame(gameData: Partial<AIGame>): Promise<ApiResponse<AIGame>> {

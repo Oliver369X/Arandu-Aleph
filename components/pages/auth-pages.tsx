@@ -278,7 +278,8 @@ export function RegisterPage() {
       } else {
         // Fallback: redirigir a dashboard de estudiante por defecto
         console.log('👨‍🎓 [RegisterPage] No se encontraron roles, redirigiendo a dashboard de estudiante por defecto');
-        router.push("/dashboard/student");
+        //router.push("/dashboard/student");
+        window.location.href = '/dashboard/teacher';
       }
     } else {
       console.log('❌ [RegisterPage] Registro falló:', result.error);
