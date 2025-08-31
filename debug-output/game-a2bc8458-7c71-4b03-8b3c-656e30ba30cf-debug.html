@@ -1,0 +1,680 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug: Quiz: introducion a ai</title>
+    <style>
+        /* Estilos de debugging para hacer visible todo */
+        * {
+            border: 1px dashed #ccc !important;
+            background: rgba(255, 0, 0, 0.1) !important;
+            color: #000 !important;
+            margin: 2px !important;
+            padding: 5px !important;
+        }
+        
+        body {
+            background: #fff !important;
+            color: #000 !important;
+            font-family: Arial, sans-serif !important;
+        }
+        
+        button {
+            background: #4CAF50 !important;
+            color: white !important;
+            border: 2px solid #000 !important;
+            padding: 10px !important;
+            margin: 5px !important;
+            cursor: pointer !important;
+            display: block !important;
+        }
+        
+        input {
+            background: #fff !important;
+            color: #000 !important;
+            border: 2px solid #000 !important;
+            padding: 5px !important;
+            margin: 5px !important;
+        }
+        
+        .hidden {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+    </style>
+</head>
+<body>
+    <div style="background: yellow; padding: 20px; color: black;">
+        <h1>🔍 DEBUG MODE - Quiz: introducion a ai</h1>
+        <p>Este HTML ha sido modificado para mostrar todos los elementos visibles</p>
+    </div>
+    
+    <div style="border: 3px solid red; margin: 10px;">
+        <h2>CONTENIDO ORIGINAL DEL JUEGO:</h2>
+        <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: introducion a ai</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-title {
+            color: #333;
+            font-size: 2.5em;
+            margin: 0 0 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-description {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .question-counter {
+            text-align: center;
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 5px solid #ff6b6b;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .question-text {
+            font-size: 1.3em;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .answer-option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 1.1em;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .answer-option:hover {
+            border-color: #ff6b6b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .answer-option.selected {
+            border-color: #ff6b6b;
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .answer-option.correct {
+            border-color: #4caf50;
+            background: #4caf50;
+            color: white;
+        }
+        
+        .answer-option.incorrect {
+            border-color: #f44336;
+            background: #f44336;
+            color: white;
+        }
+        
+        .answer-option.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .answer-letter {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            line-height: 30px;
+            text-align: center;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+        
+        .quiz-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .quiz-stats {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .results-screen {
+            text-align: center;
+            display: none;
+        }
+        
+        .results-screen.show {
+            display: block;
+        }
+        
+        .results-title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .results-score {
+            font-size: 4em;
+            font-weight: bold;
+            color: #4caf50;
+            margin-bottom: 20px;
+        }
+        
+        .results-message {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .results-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .feedback-message {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .feedback-message.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .celebration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+        }
+        
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="timer" id="timer">⏱️ 00:00</div>
+        
+        <div class="quiz-header">
+            <h1 class="quiz-title">Quiz: introducion a ai</h1>
+            <p class="quiz-description">Pon a prueba tus conocimientos sobre introducion a ai con este quiz de 5 preguntas de opción múltiple.</p>
+        </div>
+        
+        <div class="quiz-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="currentScore">0</div>
+                <div class="stat-label">Puntuación</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="correctAnswers">0</div>
+                <div class="stat-label">Correctas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalQuestions">5</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+        
+        <div class="quiz-content" id="quizContent">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="question-counter" id="questionCounter">
+                Pregunta 1 de 5
+            </div>
+            
+            <div class="question-card">
+                <div class="question-text" id="questionText">
+                    <!-- Question will be inserted here -->
+                </div>
+                
+                <div class="answers-grid" id="answersGrid">
+                    <!-- Answers will be inserted here -->
+                </div>
+                
+                <div class="feedback-message" id="feedbackMessage">
+                    <!-- Feedback will be shown here -->
+                </div>
+            </div>
+            
+            <div class="quiz-controls">
+                <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()" disabled>
+                    ← Anterior
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>
+                    Siguiente →
+                </button>
+            </div>
+        </div>
+        
+        <div class="results-screen" id="resultsScreen">
+            <h2 class="results-title">🎉 ¡Quiz Completado! 🎉</h2>
+            <div class="results-score" id="finalScore">0%</div>
+            <div class="results-message" id="resultsMessage">¡Excelente trabajo!</div>
+            
+            <div class="results-details">
+                <p><strong>Respuestas correctas:</strong> <span id="finalCorrect">0</span> de <span id="finalTotal">0</span></p>
+                <p><strong>Tiempo total:</strong> <span id="finalTime">00:00</span></p>
+                <p><strong>Puntuación final:</strong> <span id="finalPoints">0</span> puntos</p>
+            </div>
+            
+            <button class="btn btn-primary" onclick="restartQuiz()">
+                🔄 Intentar de Nuevo
+            </button>
+        </div>
+        
+        <div class="celebration" id="celebration"></div>
+    </div>
+
+    <script>
+        // Quiz Configuration - Will be replaced by AI
+        const QUIZ_DATA = [{"question":"¿Cuál es la aplicación práctica de introducion a ai?","answers":[{"text":"Tiene múltiples aplicaciones en el campo profesional","correct":true},{"text":"Solo se usa en investigación académica","correct":false},{"text":"No tiene aplicaciones reales","correct":false},{"text":"Solo para estudiantes","correct":false}],"explanation":"introducion a ai tiene aplicaciones prácticas importantes en el ámbito profesional y académico."},{"question":"¿Cuál es el concepto principal de introducion a ai?","answers":[{"text":"introducion a ai es un tema fundamental en esta materia","correct":true},{"text":"Es un concepto obsoleto","correct":false},{"text":"No tiene aplicación práctica","correct":false},{"text":"Solo se usa en teoría","correct":false}],"explanation":"introducion a ai es un concepto importante que tiene aplicaciones prácticas en el área de estudio."},{"question":"¿Cómo se relaciona introducion a ai con otros temas?","answers":[{"text":"Está conectado con otros conceptos de la materia","correct":true},{"text":"Es completamente independiente","correct":false},{"text":"Solo se relaciona con temas básicos","correct":false},{"text":"No tiene conexiones relevantes","correct":false}],"explanation":"introducion a ai forma parte de un sistema interconectado de conocimientos en la materia."},{"question":"¿Qué características definen a introducion a ai?","answers":[{"text":"Es un tema completo con múltiples aspectos interrelacionados","correct":true},{"text":"Es un concepto simple y aislado","correct":false},{"text":"No tiene estructura definida","correct":false},{"text":"Solo tiene aspectos teóricos","correct":false}],"explanation":"introducion a ai se caracteriza por ser un tema integral con múltiples dimensiones de estudio."},{"question":"¿Por qué es importante estudiar introducion a ai?","answers":[{"text":"Porque proporciona conocimientos fundamentales para la materia","correct":true},{"text":"No es importante","correct":false},{"text":"Solo para aprobar exámenes","correct":false},{"text":"Es opcional en el currículo","correct":false}],"explanation":"Estudiar introducion a ai es fundamental para comprender conceptos más avanzados en la materia."}]; // Array of questions with answers
+        
+        // Game State
+        let currentQuestion = 0;
+        let score = 0;
+        let correctAnswers = 0;
+        let selectedAnswer = null;
+        let quizStartTime = Date.now();
+        let timerInterval;
+        let userAnswers = [];
+        
+        // Initialize Quiz
+        function initQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            correctAnswers = 0;
+            selectedAnswer = null;
+            userAnswers = [];
+            quizStartTime = Date.now();
+            
+            document.getElementById('quizContent').style.display = 'block';
+            document.getElementById('resultsScreen').classList.remove('show');
+            
+            updateStats();
+            showQuestion();
+            startTimer();
+        }
+        
+        function showQuestion() {
+            const question = QUIZ_DATA[currentQuestion];
+            
+            // Update question counter and progress
+            document.getElementById('questionCounter').textContent = 
+                `Pregunta ${currentQuestion + 1} de ${QUIZ_DATA.length}`;
+            
+            const progress = ((currentQuestion + 1) / QUIZ_DATA.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            // Show question text
+            document.getElementById('questionText').textContent = question.question;
+            
+            // Show answers
+            const answersGrid = document.getElementById('answersGrid');
+            answersGrid.innerHTML = '';
+            
+            question.answers.forEach((answer, index) => {
+                const answerElement = document.createElement('div');
+                answerElement.className = 'answer-option';
+                answerElement.innerHTML = `
+                    <span class="answer-letter">${String.fromCharCode(65 + index)}</span>
+                    ${answer.text}
+                `;
+                answerElement.onclick = () => selectAnswer(index);
+                answersGrid.appendChild(answerElement);
+            });
+            
+            // Reset UI state
+            selectedAnswer = null;
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('feedbackMessage').classList.remove('show');
+        }
+        
+        function selectAnswer(answerIndex) {
+            if (selectedAnswer !== null) return; // Already answered
+            
+            selectedAnswer = answerIndex;
+            const question = QUIZ_DATA[currentQuestion];
+            const answerElements = document.querySelectorAll('.answer-option');
+            
+            // Disable all answers
+            answerElements.forEach(el => el.classList.add('disabled'));
+            
+            // Mark selected answer
+            answerElements[answerIndex].classList.add('selected');
+            
+            // Show correct/incorrect
+            const isCorrect = question.answers[answerIndex].correct;
+            
+            if (isCorrect) {
+                answerElements[answerIndex].classList.add('correct');
+                correctAnswers++;
+                score += 100; // Points per correct answer
+                showFeedback('¡Correcto! ' + (question.explanation || ''), 'success');
+            } else {
+                answerElements[answerIndex].classList.add('incorrect');
+                // Show correct answer
+                question.answers.forEach((answer, index) => {
+                    if (answer.correct) {
+                        answerElements[index].classList.add('correct');
+                    }
+                });
+                showFeedback('Incorrecto. ' + (question.explanation || 'La respuesta correcta está marcada en verde.'), 'error');
+            }
+            
+            // Store user answer
+            userAnswers[currentQuestion] = {
+                selected: answerIndex,
+                correct: isCorrect,
+                question: question.question
+            };
+            
+            updateStats();
+            document.getElementById('nextBtn').disabled = false;
+            
+            // Auto-advance after delay (optional)
+            setTimeout(() => {
+                if (currentQuestion < QUIZ_DATA.length - 1) {
+                    // nextQuestion();
+                } else {
+                    document.getElementById('nextBtn').textContent = 'Ver Resultados';
+                }
+            }, 2000);
+        }
+        
+        function showFeedback(message, type) {
+            const feedbackElement = document.getElementById('feedbackMessage');
+            feedbackElement.textContent = message;
+            feedbackElement.className = `feedback-message show ${type}`;
+        }
+        
+        function nextQuestion() {
+            if (currentQuestion < QUIZ_DATA.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+        
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+        
+        function updateStats() {
+            document.getElementById('currentScore').textContent = score;
+            document.getElementById('correctAnswers').textContent = correctAnswers;
+        }
+        
+        function showResults() {
+            clearInterval(timerInterval);
+            
+            const percentage = Math.round((correctAnswers / QUIZ_DATA.length) * 100);
+            const finalTime = document.getElementById('timer').textContent.replace('⏱️ ', '');
+            
+            // Hide quiz content and show results
+            document.getElementById('quizContent').style.display = 'none';
+            document.getElementById('resultsScreen').classList.add('show');
+            
+            // Update results
+            document.getElementById('finalScore').textContent = percentage + '%';
+            document.getElementById('finalCorrect').textContent = correctAnswers;
+            document.getElementById('finalTotal').textContent = QUIZ_DATA.length;
+            document.getElementById('finalTime').textContent = finalTime;
+            document.getElementById('finalPoints').textContent = score;
+            
+            // Results message based on performance
+            let message = '';
+            if (percentage >= 90) {
+                message = '¡Excelente! Dominas completamente el tema.';
+                createCelebration();
+            } else if (percentage >= 70) {
+                message = '¡Muy bien! Tienes un buen conocimiento del tema.';
+            } else if (percentage >= 50) {
+                message = 'Bien hecho. Hay espacio para mejorar.';
+            } else {
+                message = 'Sigue practicando. ¡Puedes hacerlo mejor!';
+            }
+            
+            document.getElementById('resultsMessage').textContent = message;
+        }
+        
+        function createCelebration() {
+            const celebration = document.getElementById('celebration');
+            celebration.innerHTML = '';
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.backgroundColor = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'][Math.floor(Math.random() * 5)];
+                celebration.appendChild(confetti);
+            }
+        }
+        
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timer').textContent = 
+                    `⏱️ ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function restartQuiz() {
+            initQuiz();
+        }
+        
+        // Initialize quiz when page loads
+        document.addEventListener('DOMContentLoaded', initQuiz);
+    </script>
+</body>
+</html>
+
+
+    </div>
+    
+    <script>
+        console.log('🐞 Debug Mode: Haciendo todos los elementos visibles');
+        
+        // Forzar visibilidad de todos los elementos
+        setTimeout(() => {
+            document.querySelectorAll('*').forEach(el => {
+                const computed = window.getComputedStyle(el);
+                if (computed.display === 'none') {
+                    el.style.display = 'block';
+                    console.log('Mostrando elemento oculto:', el);
+                }
+                if (computed.visibility === 'hidden') {
+                    el.style.visibility = 'visible';
+                    console.log('Haciendo visible elemento:', el);
+                }
+                if (computed.opacity === '0' || computed.opacity < 0.1) {
+                    el.style.opacity = '1';
+                    console.log('Aumentando opacidad:', el);
+                }
+            });
+        }, 100);
+    </script>
+</body>
+</html>
+    

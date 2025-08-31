@@ -139,14 +139,8 @@ export function GameIframe({
           overflow: hidden !important;
           background: transparent !important;
         }
-        body > div:first-child,
-        body > main:first-child,
-        body > section:first-child,
-        .game-container,
-        .quiz-container,
-        .quiz,
-        [class*="container"],
-        [class*="wrapper"] {
+        /* Solo ajustar el contenedor principal del juego, NO sus hijos */
+        .game-container {
           width: 100% !important;
           height: 100vh !important;
           min-height: 100vh !important;
@@ -157,25 +151,27 @@ export function GameIframe({
           flex-direction: column !important;
           justify-content: center !important;
         }
+        
+        /* Para quiz: permitir que mantenga su layout interno */
+        .quiz-container {
+          max-width: 800px !important;
+          width: 90% !important;
+          margin: 0 auto !important;
+          /* NO forzar height ni display para preservar el grid interno */
+        }
         ${isFullscreen ? `
-          body > * {
-            font-size: 1.2em !important;
-          }
-          .question {
+          /* Mejorar legibilidad en fullscreen sin romper layout */
+          .question-text, .quiz-title {
             font-size: 1.4em !important;
-            margin-bottom: 30px !important;
           }
-          .options {
-            gap: 15px !important;
-          }
-          .option {
-            padding: 15px 25px !important;
+          .answer-option {
+            padding: 15px 20px !important;
             font-size: 1.1em !important;
-            min-height: 60px !important;
+            min-height: 50px !important;
           }
-          .progress-bar {
-            height: 8px !important;
-            font-size: 1em !important;
+          .btn {
+            padding: 12px 20px !important;
+            font-size: 1.1em !important;
           }
           .score, .timer {
             font-size: 1.3em !important;

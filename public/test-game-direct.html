@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Carga Directa de Juego</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        
+        button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        button:hover { background: #45a049; }
+        
+        .game-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .game-link {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+        }
+        
+        .game-link:hover {
+            background: #e9ecef;
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+        }
+        
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        
+        .test-result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test: Carga Directa de Juego</h1>
+        
+        <div class="info status">
+            <strong>🎯 Propósito:</strong><br>
+            Probar si podemos cargar juegos directamente desde la API y navegar a las páginas de juego.
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="loadGames()">📋 Cargar Lista de Juegos</button>
+            <button onclick="testSpecificGame()">🎯 Probar Juego Específico</button>
+            <button onclick="clearResults()">🗑️ Limpiar Resultados</button>
+        </div>
+        
+        <div id="gamesList"></div>
+        <div id="testResults"></div>
+        
+        <div class="warning status">
+            <strong>⚠️ Problemas Comunes:</strong>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>Backend no corriendo en localhost:3001</li>
+                <li>CORS bloqueando requests desde el navegador</li>
+                <li>Juego no existe en la base de datos</li>
+                <li>Frontend esperando formato incorrecto de respuesta</li>
+                <li>Problemas de routing en Next.js</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api-v1';
+        
+        function addResult(type, title, message, data = null) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result status ${type}`;
+            
+            let content = `<strong>${title}</strong><br>${message}`;
+            if (data) {
+                content += `<br><br><details><summary>📦 Ver datos completos</summary><pre>${JSON.stringify(data, null, 2)}</pre></details>`;
+            }
+            
+            resultDiv.innerHTML = content;
+            document.getElementById('testResults').appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('gamesList').innerHTML = '';
+        }
+        
+        async function loadGames() {
+            clearResults();
+            addResult('info', '🔄 Cargando juegos...', 'Obteniendo lista de juegos desde el backend');
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai-games`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const games = await response.json();
+                console.log('Games loaded:', games);
+                
+                if (Array.isArray(games) && games.length > 0) {
+                    addResult('success', '✅ Juegos Cargados', `Se encontraron ${games.length} juegos`, games);
+                    displayGamesList(games);
+                } else {
+                    addResult('warning', '⚠️ Sin Juegos', 'No se encontraron juegos en el backend');
+                }
+                
+            } catch (error) {
+                console.error('Error loading games:', error);
+                addResult('error', '❌ Error Cargando Juegos', error.message);
+            }
+        }
+        
+        function displayGamesList(games) {
+            const gamesListDiv = document.getElementById('gamesList');
+            
+            const title = document.createElement('h3');
+            title.textContent = '🎮 Juegos Disponibles';
+            gamesListDiv.appendChild(title);
+            
+            const linksContainer = document.createElement('div');
+            linksContainer.className = 'game-links';
+            
+            games.slice(0, 6).forEach(game => {
+                const gameLink = document.createElement('div');
+                gameLink.className = 'game-link';
+                
+                gameLink.innerHTML = `
+                    <h4>${game.title || 'Sin título'}</h4>
+                    <p><strong>ID:</strong> <code>${game.id}</code></p>
+                    <p><strong>Tipo:</strong> ${game.gameType || 'N/A'}</p>
+                    <p><strong>htmlContent:</strong> ${game.htmlContent ? '✅ Sí' : '❌ No'}</p>
+                    <div style="margin-top: 10px;">
+                        <button onclick="testGameLoad('${game.id}')" style="margin: 0;">
+                            🧪 Probar API
+                        </button>
+                        <button onclick="openGamePage('${game.id}')" style="margin: 0;">
+                            🎮 Abrir Página
+                        </button>
+                    </div>
+                `;
+                
+                linksContainer.appendChild(gameLink);
+            });
+            
+            gamesListDiv.appendChild(linksContainer);
+        }
+        
+        async function testGameLoad(gameId) {
+            addResult('info', '🔄 Probando API...', `Cargando juego ${gameId} via API`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai-games/${gameId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const game = await response.json();
+                console.log('Individual game loaded:', game);
+                
+                if (game && game.id) {
+                    addResult('success', '✅ API Test Exitoso', 
+                        `Juego cargado correctamente:<br>
+                        - ID: ${game.id}<br>
+                        - Título: ${game.title}<br>
+                        - htmlContent: ${game.htmlContent ? 'Presente' : 'Ausente'}<br>
+                        - Tamaño HTML: ${game.htmlContent ? (game.htmlContent.length + ' chars') : 'N/A'}`,
+                        game
+                    );
+                } else {
+                    addResult('warning', '⚠️ Respuesta Extraña', 'El juego se cargó pero no tiene el formato esperado', game);
+                }
+                
+            } catch (error) {
+                console.error('Error testing game:', error);
+                addResult('error', '❌ Error en API Test', error.message);
+            }
+        }
+        
+        function openGamePage(gameId) {
+            const gameUrl = `/game/${gameId}`;
+            addResult('info', '🚀 Abriendo Página', `Navegando a: ${gameUrl}`);
+            
+            // Abrir en nueva pestaña
+            window.open(gameUrl, '_blank');
+        }
+        
+        async function testSpecificGame() {
+            // Usar el ID que encontramos en el debugging
+            const gameId = 'a2bc8458-7c71-4b03-8b3c-656e30ba30cf';
+            addResult('info', '🎯 Test Específico', `Probando con el game ID: ${gameId}`);
+            
+            await testGameLoad(gameId);
+            
+            setTimeout(() => {
+                openGamePage(gameId);
+            }, 1000);
+        }
+        
+        // Auto-cargar juegos al abrir la página
+        window.addEventListener('load', () => {
+            addResult('info', '🚀 Test Cargado', 'Listo para probar. Haz clic en "Cargar Lista de Juegos" para comenzar.');
+        });
+    </script>
+</body>
+</html>

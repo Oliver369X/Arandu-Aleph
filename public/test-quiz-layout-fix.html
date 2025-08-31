@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Quiz Layout Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .bad-example .iframe-simulation {
+            /* Estilos problemáticos que estaban rompiendo el quiz */
+            width: 100% !important;
+            height: 100vh !important;
+            min-height: 100vh !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+        }
+        
+        .good-example .iframe-simulation {
+            /* Estilos corregidos que respetan el layout del quiz */
+            max-width: 800px !important;
+            width: 90% !important;
+            margin: 0 auto !important;
+            /* NO forzamos height ni display para preservar el grid interno */
+        }
+        
+        /* Estilos del quiz original (copiados del juego real) */
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quiz-title {
+            color: #333;
+            font-size: 2.5em;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+        
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 5px solid #ff6b6b;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .question-text {
+            font-size: 1.3em;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .answer-option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            min-height: 80px;
+        }
+        
+        .answer-option:hover {
+            border-color: #4ecdc4;
+            background: #f0fdfc;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.2);
+        }
+        
+        .answer-letter {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .bad { background: #ff6b6b; }
+        .good { background: #4ecdc4; }
+        
+        .comparison-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test: Corrección del Layout del Quiz</h1>
+    
+    <div class="comparison-note">
+        <strong>🎯 Objetivo:</strong> Mostrar cómo los estilos CSS sobreescritos estaban rompiendo el layout del quiz 
+        y cómo la corrección permite que las opciones se muestren correctamente en el grid 2x2.
+    </div>
+    
+    <div class="test-container">
+        <!-- EJEMPLO MALO (ANTES) -->
+        <div class="test-section bad-example">
+            <div class="status-badge bad">❌ ANTES (Roto)</div>
+            <h2>Con estilos problemáticos</h2>
+            <p><strong>Problema:</strong> Forzar <code>display: flex</code> en <code>.quiz-container</code> rompe el grid de opciones.</p>
+            
+            <div class="iframe-simulation">
+                <div class="quiz-container">
+                    <h1 class="quiz-title">Quiz: Introducción a AI</h1>
+                    
+                    <div class="question-card">
+                        <div class="question-text">¿Por qué es importante estudiar introducción a ai?</div>
+                        
+                        <!-- Este grid NO funciona porque el contenedor padre tiene display:flex forzado -->
+                        <div class="answers-grid">
+                            <div class="answer-option">
+                                <span class="answer-letter">A</span>
+                                Porque proporciona conocimientos fundamentales
+                            </div>
+                            <div class="answer-option">
+                                <span class="answer-letter">B</span>
+                                No es importante
+                            </div>
+                            <div class="answer-option">
+                                <span class="answer-letter">C</span>
+                                Solo para aprobar exámenes
+                            </div>
+                            <div class="answer-option">
+                                <span class="answer-letter">D</span>
+                                Es opcional en el currículo
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #f8d7da; padding: 10px; border-radius: 5px; margin-top: 15px; color: #721c24;">
+                <strong>Resultado:</strong> Las opciones se alinean verticalmente en una sola columna porque el grid se rompe.
+            </div>
+        </div>
+        
+        <!-- EJEMPLO BUENO (DESPUÉS) -->
+        <div class="test-section good-example">
+            <div class="status-badge good">✅ DESPUÉS (Arreglado)</div>
+            <h2>Con estilos corregidos</h2>
+            <p><strong>Solución:</strong> Solo ajustar el tamaño, NO forzar <code>display</code> ni <code>height</code>.</p>
+            
+            <div class="iframe-simulation">
+                <div class="quiz-container">
+                    <h1 class="quiz-title">Quiz: Introducción a AI</h1>
+                    
+                    <div class="question-card">
+                        <div class="question-text">¿Por qué es importante estudiar introducción a ai?</div>
+                        
+                        <!-- Este grid SÍ funciona porque respetamos el display:grid original -->
+                        <div class="answers-grid">
+                            <div class="answer-option">
+                                <span class="answer-letter">A</span>
+                                Porque proporciona conocimientos fundamentales
+                            </div>
+                            <div class="answer-option">
+                                <span class="answer-letter">B</span>
+                                No es importante
+                            </div>
+                            <div class="answer-option">
+                                <span class="answer-letter">C</span>
+                                Solo para aprobar exámenes
+                            </div>
+                            <div class="answer-option">
+                                <span class="answer-letter">D</span>
+                                Es opcional en el currículo
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #d4edda; padding: 10px; border-radius: 5px; margin-top: 15px; color: #155724;">
+                <strong>Resultado:</strong> Las opciones se muestran correctamente en grid 2x2, como está diseñado.
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin: 40px 0; padding: 20px; background: #e3f2fd; border-radius: 10px; color: #0d47a1;">
+        <h3>🔧 Cambios Realizados en GameIframe.tsx:</h3>
+        <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; color: #333;">
+// ANTES (Problemático):
+body > div:first-child, .quiz-container {
+  display: flex !important;           // ❌ Rompe el grid
+  flex-direction: column !important;  // ❌ Fuerza layout vertical
+  height: 100vh !important;           // ❌ Innecesario para quiz
+}
+
+// DESPUÉS (Corregido):
+.quiz-container {
+  max-width: 800px !important;        // ✅ Ajusta tamaño
+  width: 90% !important;              // ✅ Responsive
+  margin: 0 auto !important;          // ✅ Centra
+  // ✅ NO forzamos display ni height
+}</pre>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0; padding: 20px; background: #fff3cd; border-radius: 10px; color: #856404;">
+        <strong>🎉 ¡El problema de las opciones invisibles está solucionado!</strong><br>
+        Ahora el quiz debería mostrar las opciones correctamente en un grid 2x2 funcional.
+    </div>
+    
+    <script>
+        // Simular interactividad
+        document.querySelectorAll('.answer-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remover selección anterior
+                document.querySelectorAll('.answer-option').forEach(opt => {
+                    opt.style.borderColor = '#e0e0e0';
+                    opt.style.background = 'white';
+                });
+                
+                // Marcar como seleccionado
+                this.style.borderColor = '#4ecdc4';
+                this.style.background = '#f0fdfc';
+                
+                console.log('Opción seleccionada:', this.textContent.trim());
+            });
+        });
+        
+        console.log('🎮 Test de layout cargado. Las opciones deberían ser clickeables.');
+    </script>
+</body>
+</html>

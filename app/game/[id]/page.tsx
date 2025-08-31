@@ -50,25 +50,45 @@ export default function GamePage() {
     const loadGame = async () => {
       try {
         setIsLoading(true);
+        console.log('🔍 [GamePage] Intentando cargar juego con ID:', gameId);
         
         // Intentar cargar el juego desde la API
         const response = await apiService.getAIGameById(gameId);
-        if (response) {
+        console.log('📦 [GamePage] Respuesta de la API:', response);
+        
+        // El endpoint devuelve directamente el objeto del juego, no wrapped en {success, data}
+        if (response && response.id && response.htmlContent) {
+          console.log('✅ [GamePage] Juego cargado exitosamente (directo):', response);
           setGame(response);
           setError(null);
+        } else if (response && response.success && response.data) {
+          console.log('✅ [GamePage] Juego cargado exitosamente (wrapped):', response.data);
+          setGame(response.data);
+          setError(null);
+        } else if (response && response.data) {
+          // Fallback si no tiene la estructura success/data
+          console.log('✅ [GamePage] Juego cargado (fallback):', response.data);
+          setGame(response.data);
+          setError(null);
         } else {
-          throw new Error('Juego no encontrado');
+          console.error('❌ [GamePage] Respuesta inválida:', response);
+          console.error('❌ [GamePage] Expected: object with id and htmlContent');
+          console.error('❌ [GamePage] Received keys:', Object.keys(response || {}));
+          throw new Error('Juego no encontrado o respuesta inválida');
         }
       } catch (err) {
-        console.error('Error cargando juego:', err);
-        setError('No se pudo cargar el juego');
+        console.error('💥 [GamePage] Error completo cargando juego:', err);
+        setError(`No se pudo cargar el juego: ${err instanceof Error ? err.message : 'Error desconocido'}`);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (gameId) {
+      console.log('🚀 [GamePage] Iniciando carga de juego...');
       loadGame();
+    } else {
+      console.warn('⚠️ [GamePage] No hay gameId disponible');
     }
   }, [gameId]);
 
@@ -134,9 +154,20 @@ export default function GamePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="text-center">
+        <div className="text-center max-w-md">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg">Cargando juego...</p>
+          <p className="text-muted-foreground text-lg mb-2">Cargando juego...</p>
+          <p className="text-sm text-muted-foreground">ID: {gameId}</p>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-left">
+              <p className="text-xs text-blue-700 font-mono">
+                🔍 Debug Info:<br/>
+                - Game ID: {gameId}<br/>
+                - Endpoint: /api-v1/ai-games/{gameId}<br/>
+                - Revisa la consola del navegador para más detalles
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -145,14 +176,43 @@ export default function GamePage() {
   if (error || !game) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-orange-50">
-        <div className="text-center max-w-md">
+        <div className="text-center max-w-lg">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-red-700 mb-2">Error al cargar el juego</h1>
-          <p className="text-red-600 mb-6">{error}</p>
-          <Button onClick={handleBack} variant="outline">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
+          <p className="text-red-600 mb-4">{error || 'Juego no encontrado'}</p>
+          
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-6 p-4 bg-red-50 rounded-lg text-left">
+              <p className="text-xs text-red-700 font-mono">
+                🔍 Debug Info:<br/>
+                - Game ID: {gameId}<br/>
+                - Error: {error}<br/>
+                - Game object: {game ? 'Exists' : 'null/undefined'}<br/>
+                - API Endpoint: GET /api-v1/ai-games/{gameId}<br/>
+                <br/>
+                💡 Posibles causas:<br/>
+                - El juego no existe en la base de datos<br/>
+                - El backend no está corriendo<br/>
+                - El endpoint /ai-games/:id no existe<br/>
+                - Problema de CORS o red<br/>
+                <br/>
+                🔧 Revisa:<br/>
+                - Network tab en DevTools<br/>
+                - Console logs<br/>
+                - Backend logs
+              </p>
+            </div>
+          )}
+          
+          <div className="flex gap-3 justify-center">
+            <Button onClick={() => window.location.reload()} variant="outline">
+              🔄 Reintentar
+            </Button>
+            <Button onClick={handleBack} variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+          </div>
         </div>
       </div>
     );
