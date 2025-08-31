@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { apiService } from "@/lib/api"
-import { determineUserRole, getDashboardRoute } from "@/lib/roles"
+
 
 export function LoginPage() {
   const { login, loginWithWallet, isLoading } = useAuth()
@@ -38,25 +38,34 @@ export function LoginPage() {
       const currentUser = await apiService.getCurrentUser();
       console.log('🔍 [LoginPage] Usuario actual:', currentUser);
       
-      if (currentUser.success && currentUser.data) {
-        const user = currentUser.data;
-        console.log('🔍 [LoginPage] Datos del usuario:', user);
+      if (currentUser.success && currentUser.data && currentUser.data.roles && currentUser.data.roles.length > 0) {
+        const userRoles = currentUser.data.roles;
+        console.log('🔍 [LoginPage] Roles del usuario desde login:', userRoles);
         
-        // Determinar el rol y redirigir
-        const role = determineUserRole(user);
-        console.log('🔍 [LoginPage] Rol determinado:', role);
-        console.log('🔍 [LoginPage] Roles del usuario:', user.roles);
+        // Determinar el rol principal (tomar el primero si hay múltiples)
+        const primaryRole = userRoles[0].toLowerCase();
+        console.log('🔍 [LoginPage] Rol principal:', primaryRole);
         
-        const dashboardRoute = getDashboardRoute(role);
-        console.log(`🎯 [LoginPage] Rol determinado: ${role}, redirigiendo a: ${dashboardRoute}`);
+        // Mapeo dinámico basado en el rol del usuario
+        let dashboardRoute = '/dashboard/student'; // Por defecto
+        
+        if (primaryRole === 'teacher') {
+          dashboardRoute = '/dashboard/teacher';
+        } else if (primaryRole === 'admin') {
+          dashboardRoute = '/admin';
+        } else if (primaryRole === 'institution') {
+          dashboardRoute = '/admin'; // O la ruta específica para instituciones
+        }
+        
+        console.log(`🎯 [LoginPage] Rol del usuario: ${primaryRole}, redirigiendo a: ${dashboardRoute}`);
         console.log('🚨 [LoginPage] REDIRECCIÓN DE LOGIN A:', dashboardRoute);
         
-        // 🚨 REDIRECCIÓN FORZADA CON WINDOW.LOCATION
+        // Redirección usando window.location para forzar la navegación
         console.log('🔄 [LoginPage] Usando window.location.href para redirección forzada');
         window.location.href = dashboardRoute;
       } else {
         // Fallback: redirigir a dashboard de estudiante por defecto
-        console.log('👨‍🎓 [LoginPage] No se pudo determinar el rol, redirigiendo a dashboard de estudiante por defecto');
+        console.log('👨‍🎓 [LoginPage] No se encontraron roles, redirigiendo a dashboard de estudiante por defecto');
         router.push("/dashboard/student");
       }
     } else {
@@ -213,42 +222,11 @@ export function RegisterPage() {
       return
     }
 
-    // 🚨 MAPEO FORZADO DE ROLES - SOLUCIÓN TEMPORAL
-    const roleMapping: Record<string, string> = {
-      'student': '44f5da8f-4a10-4ef2-8657-ba5df72e0ef1',
-      'teacher': 'ee9f44dd-621d-4acd-ba7f-b51fba39de00',
-      'admin': 'b14573f9-523b-49ff-bc16-ce026a1893c8',
-      'institution': '55499a80-a71a-4962-a3df-c56ffd090f41'
-    };
-
-    // Convertir nombre de rol a ID ANTES de cualquier otra validación
-    const roleId = roleMapping[formData.role] || formData.role;
-    console.log('🚨 [RegisterPage] MAPEO FORZADO - Rol original:', formData.role, '→ ID:', roleId);
-
-    // Encontrar el rol seleccionado
+    // Encontrar el rol seleccionado en los roles cargados dinámicamente
     console.log('🔍 [RegisterPage] Roles disponibles:', roles);
     console.log('🔍 [RegisterPage] Buscando rol:', formData.role);
     
-    // Mapeo hardcoded de nombres a IDs como fallback
-    const roleMapping: Record<string, string> = {
-      'student': '44f5da8f-4a10-4ef2-8657-ba5df72e0ef1',
-      'teacher': 'ee9f44dd-621d-4acd-ba7f-b51fba39de00',
-      'admin': 'b14573f9-523b-49ff-bc16-ce026a1893c8',
-      'institution': '55499a80-a71a-4962-a3df-c56ffd090f41'
-    };
-    
-    let selectedRole = roles.find(r => r.name === formData.role);
-    
-    // Si no se encuentra en los roles cargados, usar mapeo hardcoded
-    if (!selectedRole && roleMapping[formData.role]) {
-      selectedRole = {
-        id: roleMapping[formData.role],
-        name: formData.role,
-        description: `Rol ${formData.role}`
-      };
-      console.log('🔧 [RegisterPage] Usando mapeo hardcoded para rol:', selectedRole);
-    }
-    
+    const selectedRole = roles.find(r => r.name === formData.role);
     console.log('🔍 [RegisterPage] Rol encontrado:', selectedRole);
     
     if (!selectedRole) {
@@ -258,48 +236,50 @@ export function RegisterPage() {
 
     console.log('🔍 [RegisterPage] Enviando al backend:', {
       ...formData,
-      role: roleId,  // ← 🚨 USAR EL ID MAPEADO DIRECTAMENTE
+      role: selectedRole.id,  // Usar el ID del rol encontrado
       password: '***'
     });
 
-    // 🚨 MAPEO DIRECTO Y SIMPLE - FORZAR EL ID CORRECTO
-    let finalRole = formData.role;
-    if (formData.role === 'teacher') {
-      finalRole = 'ee9f44dd-621d-4acd-ba7f-b51fba39de00';
-    } else if (formData.role === 'student') {
-      finalRole = '44f5da8f-4a10-4ef2-8657-ba5df72e0ef1';
-    } else if (formData.role === 'admin') {
-      finalRole = 'b14573f9-523b-49ff-bc16-ce026a1893c8';
-    }
-    
-    console.log('🚨 MAPEO DIRECTO:', formData.role, '→', finalRole);
-
     const result = await register({
       ...formData,
-      role: finalRole  // ← 🚨 USAR EL ID MAPEADO DIRECTAMENTE
+      role: selectedRole.id  // Usar el ID del rol encontrado
     })
     console.log('🔍 [RegisterPage] Resultado del registro:', result);
     
-    if (result.success) {
-      console.log('✅ [RegisterPage] Registro exitoso, redirigiendo...');
+    if (result.success && result.loginResponse && result.loginResponse.user) {
+      console.log('✅ [RegisterPage] Registro exitoso, obteniendo roles del usuario...');
       
-      // 🚨 MAPEO DIRECTO DE REDIRECCIÓN - SOLUCIÓN TEMPORAL
-      let dashboardRoute = '/dashboard/student'; // Por defecto
+      // Obtener los roles del usuario desde la respuesta del login
+      const userRoles = result.loginResponse.user.roles;
+      console.log('🔍 [RegisterPage] Roles del usuario desde login:', userRoles);
       
-      if (formData.role === 'teacher') {
-        dashboardRoute = '/dashboard/teacher';
-      } else if (formData.role === 'admin') {
-        dashboardRoute = '/admin';
-      } else if (formData.role === 'student') {
-        dashboardRoute = '/dashboard/student';
+      if (userRoles && userRoles.length > 0) {
+        // Determinar el rol principal (tomar el primero si hay múltiples)
+        const primaryRole = userRoles[0].toLowerCase();
+        console.log('🔍 [RegisterPage] Rol principal:', primaryRole);
+        
+        // Mapeo dinámico basado en el rol del usuario
+        let dashboardRoute = '/dashboard/student'; // Por defecto
+        
+        if (primaryRole === 'teacher') {
+          dashboardRoute = '/dashboard/teacher';
+        } else if (primaryRole === 'admin') {
+          dashboardRoute = '/admin';
+        } else if (primaryRole === 'institution') {
+          dashboardRoute = '/admin'; // O la ruta específica para instituciones
+        }
+        
+        console.log(`🎯 [RegisterPage] Rol del usuario: ${primaryRole}, redirigiendo a: ${dashboardRoute}`);
+        console.log('🚨 [RegisterPage] REDIRECCIÓN FORZADA A:', dashboardRoute);
+        
+        // Redirección usando window.location para forzar la navegación
+        console.log('🔄 [RegisterPage] Usando window.location.href para redirección forzada');
+        window.location.href = dashboardRoute;
+      } else {
+        // Fallback: redirigir a dashboard de estudiante por defecto
+        console.log('👨‍🎓 [RegisterPage] No se encontraron roles, redirigiendo a dashboard de estudiante por defecto');
+        router.push("/dashboard/student");
       }
-      
-      console.log(`🎯 [RegisterPage] Rol seleccionado: ${formData.role}, redirigiendo a: ${dashboardRoute}`);
-      console.log('🚨 [RegisterPage] REDIRECCIÓN FORZADA A:', dashboardRoute);
-      
-      // 🚨 REDIRECCIÓN FORZADA CON WINDOW.LOCATION
-      console.log('🔄 [RegisterPage] Usando window.location.href para redirección forzada');
-      window.location.href = dashboardRoute;
     } else {
       console.log('❌ [RegisterPage] Registro falló:', result.error);
       setError(result.error || "Error al crear la cuenta")

@@ -135,7 +135,7 @@ export function useAuth() {
           setUser(loginResponse.user)
           setIsAuthenticated(true)
         }
-        return { success: true }
+        return { success: true, loginResponse }
       } else {
         return { success: false, error: response.error || "Registration failed" }
       }
